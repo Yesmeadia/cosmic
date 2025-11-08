@@ -1,0 +1,35 @@
+export interface Registration {
+  id?: string;
+  studentName: string;
+  mobile: string;
+  whatsapp: string;
+  email: string;
+  class: string;
+  school: string;
+  fatherName: string;
+  motherName: string;
+  attendingParent: 'Father' | 'Mother' | 'Both' | 'Others';
+  paymentStatus: 'pending' | 'paid' | 'not-completed';
+  transactionReference?: string;
+  timestamp: string;
+  updatedAt?: string;
+}
+
+export interface User {
+  uid: string;
+  email: string;
+}
+
+export interface FilterState {
+  class: string;
+  attendingParent: string;
+  search: string;
+  paymentStatus: string;
+}
+
+export interface Stats {
+  total: number;
+  byClass: Record<string, number>;
+  byParent: Record<string, number>;
+  byPaymentStatus: Record<string, number>;
+}
