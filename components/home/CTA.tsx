@@ -17,7 +17,7 @@ export const CTA: React.FC = () => {
       >
         <h3 className="text-4xl font-bold text-gray-800 mb-6">Ready to Join Us?</h3>
         <p className="text-xl text-gray-600 mb-8">
-          Secure your spot today - Limited seats available!
+          Admission: only for the firstly registered 100 students of Grades 9th to 12th. 
         </p>
         <Button 
           onClick={() => router.push('/register')}
