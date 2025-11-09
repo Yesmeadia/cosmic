@@ -9,6 +9,7 @@ export interface Registration {
   fatherName: string;
   fathermobile: string;
   motherName: string;
+  registrationId: string;
   attendingParent: 'Father' | 'Mother' | 'Both' | 'Others';
   paymentStatus: 'pending' | 'paid' | 'not-completed';
   transactionReference?: string;
