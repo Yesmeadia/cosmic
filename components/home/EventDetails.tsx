@@ -4,7 +4,21 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, MapPin, Users, Award, Star, GraduationCap, Rocket } from 'lucide-react';
 
-const presenters = [
+interface Presenter {
+  name: string;
+  photo: string;
+  bio: string;
+  role: string;
+  achievement: string;
+}
+
+interface EventDetail {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  value: string;
+}
+
+const presenters: Presenter[] = [
   {
     name: 'Sarim Khan',
     photo: '/1.png',
@@ -21,7 +35,7 @@ const presenters = [
   }
 ];
 
-const eventDetailsData = [
+const eventDetailsData: EventDetail[] = [
   { icon: Calendar, title: 'Date', value: 'November 30, 2025' },
   { icon: Clock, title: 'Time', value: '9:00 AM - 1:00 PM' },
   { icon: MapPin, title: 'Venue', value: 'Grand Arena, Al-Wahda Mall, Abu Dhabi' },
@@ -40,7 +54,11 @@ const containerVariants = {
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 30, scale: 0.9 },
+  hidden: { 
+    opacity: 0, 
+    y: 30, 
+    scale: 0.9 
+  },
   visible: {
     opacity: 1,
     y: 0,
@@ -53,19 +71,33 @@ const itemVariants = {
 };
 
 const imageVariants = {
-  hidden: { scale: 1.1, opacity: 0 },
+  hidden: { 
+    scale: 1.1, 
+    opacity: 0 
+  },
   visible: {
     scale: 1,
     opacity: 1,
-    transition: { duration: 0.8, ease: "easeOut" }
+    transition: { 
+      duration: 0.8, 
+      ease: "easeOut" 
+    }
   },
   hover: {
     scale: 1.05,
-    transition: { duration: 0.4 }
+    transition: { 
+      duration: 0.4 
+    }
   }
 };
 
-const sectionHeader = (badge: string, title: string, subtitle: string) => (
+interface SectionHeaderProps {
+  badge: string;
+  title: string;
+  subtitle: string;
+}
+
+const SectionHeader: React.FC<SectionHeaderProps> = ({ badge, title, subtitle }) => (
   <motion.div
     initial={{ opacity: 0, y: -20 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -107,7 +139,11 @@ export const EventDetails: React.FC = () => {
       {/* PRESENTERS SECTION */}
       <section className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
-          {sectionHeader("FEATURED SPEAKERS", "Meet Our Presenters", "Extraordinary minds pushing the boundaries of science and innovation")}
+          <SectionHeader 
+            badge="FEATURED SPEAKERS" 
+            title="Meet Our Presenters" 
+            subtitle="Extraordinary minds pushing the boundaries of science and innovation" 
+          />
 
           <motion.div
             variants={containerVariants}
@@ -118,7 +154,7 @@ export const EventDetails: React.FC = () => {
           >
             {presenters.map((presenter, idx) => (
               <motion.div
-                key={idx}
+                key={presenter.name}
                 variants={itemVariants}
                 whileHover="hover"
                 className="group relative"
@@ -147,9 +183,13 @@ export const EventDetails: React.FC = () => {
                           alt={presenter.name}
                           width={200}
                           height={240}
-                          className="w-[200px] h-[240px] object-cover rounded-xl relative z-10"
+                          className="w-[200px] h-[240px] object-cover rounded-xl relative z-10 bg-gray-700"
                           whileHover={{ scale: 1.02 }}
                           transition={{ duration: 0.3 }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDIwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik0xMDAgMTIwTDE0MCA4MEwxMDAgNDBMNjAgODBMMTAwIDEyMFoiIGZpbGw9IiA2QjcyOEYiLz4KPC9zdmc+';
+                          }}
                         />
                         
                         {/* Shine Overlay */}
@@ -267,7 +307,11 @@ export const EventDetails: React.FC = () => {
       {/* EVENT DETAILS SECTION */}
       <section className="py-20 px-6 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          {sectionHeader("EVENT INFO", "Event Highlights", "Join us for an exclusive gathering of brilliant minds and groundbreaking ideas")}
+          <SectionHeader 
+            badge="EVENT INFO" 
+            title="Event Highlights" 
+            subtitle="Join us for an exclusive gathering of brilliant minds and groundbreaking ideas" 
+          />
 
           <motion.div
             variants={containerVariants}
