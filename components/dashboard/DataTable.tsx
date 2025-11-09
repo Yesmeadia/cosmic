@@ -212,7 +212,7 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <button
-                    onClick={() => handleDelete(registration.id, registration.studentName)}
+                    onClick={() => handleDelete(registration.id!, registration.studentName)}
                     className="text-red-600 hover:text-red-900 transition-colors"
                     title="Delete registration"
                   >
