@@ -8,7 +8,6 @@ const features = [
   { title: 'Interactive Workshops', desc: 'Hands-on learning experiences in various subjects' },
   { title: 'Networking', desc: 'Connect with peers and industry professionals' },
   { title: 'Skill Development', desc: 'Enhance your academic and soft skills' },
-  { title: 'Parent Sessions', desc: 'Special sessions for parents on guiding their children' },
   { title: 'Certificates', desc: 'Receive participation certificates' }
 ];
 

@@ -33,8 +33,8 @@ export const Hero: React.FC = () => {
               priority
             />
           </div>
-          <p className="text-xl text-white mb-600 mb-8">
-            A session of talks and interaction of 2 young prodigies in physics, from India Mr. Sarim KhanUthar Pradesh and Mr. Habel Anwar from Kerala– popular for international grants and paper presentations – verily energizing sessions for the secondary level science enthusiastic students, especially physics and astronomy.
+          <p className="text-xl text-white mb-8">
+            A session of talks and interaction of 2 young prodigies of India - the Little Einstein Mr. Sarim Khan from Uthar Pradesh and Grant Awardee (from George Mason University -USA) Mr. Habel Anwar from Kerala -  verily energizing sessions for the secondary level Science enthusiast students, especially Quantum Physics and Astro-Physics.
           </p>
           <Button onClick={() => router.push('/register')}>
             Register Now →

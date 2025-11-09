@@ -15,8 +15,8 @@ export const CTA: React.FC = () => {
         whileInView={{ scale: 1, opacity: 1 }}
         viewport={{ once: true }}
       >
-        <h3 className="text-4xl font-bold text-gray-800 mb-6">Ready to Join Us?</h3>
-        <p className="text-xl text-gray-600 mb-8">
+        <h3 className="text-4xl font-bold text-white mb-6">Ready to Join Us?</h3>
+        <p className="text-xl text-white mb-8">
           Admission: only for the firstly registered 100 students of Grades 9th to 12th. 
         </p>
         <Button 
