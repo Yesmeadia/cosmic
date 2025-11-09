@@ -28,8 +28,8 @@ export const PaymentStatusModal: React.FC<PaymentStatusModalProps> = ({
 
   useEffect(() => {
     if (registration) {
-      setSelectedStatus(registration.paymentStatus);
-      setTransactionRef(registration.transactionReference || '');
+      setSelectedStatus(registration.paymentStatus || 'pending'); // Ensure a default value
+      setTransactionRef(registration.transactionReference || ''); 
     }
   }, [registration]);
 
@@ -124,6 +124,7 @@ export const PaymentStatusModal: React.FC<PaymentStatusModalProps> = ({
               <button
                 onClick={onClose}
                 className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+                title="Close"
               >
                 <X className="w-6 h-6" />
               </button>

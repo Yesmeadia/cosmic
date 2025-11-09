@@ -42,6 +42,21 @@ const eventDetailsData: EventDetail[] = [
   { icon: Users, title: 'Expected', value: 'Only For 100 participants' }
 ];
 
+// Define transitions separately with proper typing
+const baseTransition = {
+  duration: 0.6,
+  ease: "easeOut" as const
+};
+
+const imageTransition = {
+  duration: 0.8,
+  ease: "easeOut" as const
+};
+
+const hoverTransition = {
+  duration: 0.4
+};
+
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -63,10 +78,7 @@ const itemVariants: Variants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { 
-      duration: 0.6, 
-      ease: "easeOut" 
-    },
+    transition: baseTransition
   },
 };
 
@@ -78,16 +90,11 @@ const imageVariants: Variants = {
   visible: {
     scale: 1,
     opacity: 1,
-    transition: { 
-      duration: 0.8, 
-      ease: "easeOut" 
-    }
+    transition: imageTransition
   },
   hover: {
     scale: 1.05,
-    transition: { 
-      duration: 0.4 
-    }
+    transition: hoverTransition
   }
 };
 
@@ -215,7 +222,7 @@ export const EventDetails: React.FC = () => {
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 + idx * 0.1 }}
+                        transition={{ delay: 0.3 + idx * 0.1, duration: 0.4 }}
                         className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-500/30 mb-4"
                       >
                         <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
@@ -228,7 +235,7 @@ export const EventDetails: React.FC = () => {
                       <motion.h3
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 + idx * 0.1 }}
+                        transition={{ delay: 0.4 + idx * 0.1, duration: 0.4 }}
                         className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 group-hover:bg-clip-text transition-all duration-300"
                       >
                         {presenter.name}
@@ -238,7 +245,7 @@ export const EventDetails: React.FC = () => {
                       <motion.p
                         initial={{ opacity: 0, y: 5 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.45 + idx * 0.1 }}
+                        transition={{ delay: 0.45 + idx * 0.1, duration: 0.4 }}
                         className="text-amber-400 text-sm font-semibold mb-4 flex items-center gap-2 justify-center md:justify-start"
                       >
                         {presenter.name === 'Sarim Khan' ? (
@@ -258,7 +265,7 @@ export const EventDetails: React.FC = () => {
                       <motion.p
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 + idx * 0.1 }}
+                        transition={{ delay: 0.5 + idx * 0.1, duration: 0.4 }}
                         className="text-gray-300 leading-relaxed mb-6 text-sm md:text-base"
                       >
                         {presenter.bio}
@@ -268,7 +275,7 @@ export const EventDetails: React.FC = () => {
                       <motion.div
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
-                        transition={{ delay: 0.6 + idx * 0.1 }}
+                        transition={{ delay: 0.6 + idx * 0.1, duration: 0.4 }}
                         className="flex flex-wrap gap-3 justify-center md:justify-start"
                       >
                         {presenter.name === 'Sarim Khan' ? (
@@ -327,6 +334,7 @@ export const EventDetails: React.FC = () => {
                   key={idx}
                   variants={itemVariants}
                   whileHover={{ y: -8, scale: 1.02 }}
+                  transition={{ duration: 0.3 }}
                   className="group"
                 >
                   <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/80 backdrop-blur-xl rounded-2xl p-8 border border-white/5 hover:border-white/10 transition-all duration-500 h-full relative overflow-hidden">
