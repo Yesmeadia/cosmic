@@ -18,7 +18,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* ✅ Microsoft Clarity */}
+        {/* ✅ Google Tag Manager / Google Analytics */}
+        <Script
+          id="gtag-base"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-QR13SN972H"
+        />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-QR13SN972H');
+            `,
+          }}
+        />
         <Script
           id="ms-clarity"
           strategy="afterInteractive"
@@ -27,40 +44,14 @@ export default function RootLayout({
               c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
               t=l.createElement(r); t.async=1; t.src="https://www.clarity.ms/tag/"+i;
               y=l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "u3enqvyzjl);`, 
+            })(window, document, "clarity", "script", "u3enqvyzjl");`,
           }}
         />
-        <Script
-          id="gtm-script"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function(w,d,s,l,i){
-                w[l]=w[l]||[];
-                w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
-                var f=d.getElementsByTagName(s)[0],
-                j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
-                j.async=true;
-                j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-                f.parentNode.insertBefore(j,f);
-              })(window,document,'script','dataLayer','G-QR13SN972H'); // Replace with your GTM ID
-            `,
-          }}
-        />
-        <meta name="google-site-verification" content="tQABBGtQhIDRkNUCITfLcauClDDhhaaYbfYYC2_CSi8" />
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-QR13SN972H"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-QR13SN972H');
-</script>
       </head>
       <body className={inter.className}>
         <noscript>
           <iframe
-            src="https://www.googletagmanager.com/gtag/js?id=G-QR13SN972H"
+            src="https://www.googletagmanager.com/ns.html?id=G-QR13SN972H"
             height="0"
             width="0"
             style={{ display: 'none', visibility: 'hidden' }}
