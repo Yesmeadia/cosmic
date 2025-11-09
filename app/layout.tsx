@@ -29,6 +29,7 @@ export default function RootLayout({
             })(window, document, "clarity", "script", "XXXXX");`,
           }}
         />
+        <meta name="google-site-verification" content="tQABBGtQhIDRkNUCITfLcauClDDhhaaYbfYYC2_CSi8" />
       </head>
       <body className={inter.className}>
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
