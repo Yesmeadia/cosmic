@@ -1,7 +1,5 @@
-'use client';
-
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, cubicBezier } from 'framer-motion';
 import { Calendar, Clock, MapPin, Users, Award, Star, GraduationCap, Rocket } from 'lucide-react';
 
 interface Presenter {
@@ -65,7 +63,7 @@ const itemVariants = {
     scale: 1,
     transition: { 
       duration: 0.6, 
-      ease: [0.25, 0.46, 0.45, 0.94] 
+      ease: cubicBezier(0.25, 0.46, 0.45, 0.94) 
     },
   },
 };
@@ -80,14 +78,12 @@ const imageVariants = {
     opacity: 1,
     transition: { 
       duration: 0.8, 
-      ease: "easeOut" 
+      ease: 'easeOut' 
     }
   },
   hover: {
     scale: 1.05,
-    transition: { 
-      duration: 0.4 
-    }
+    transition: { duration: 0.4 }
   }
 };
 
@@ -136,7 +132,6 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ badge, title, subtitle })
 export const EventDetails: React.FC = () => {
   return (
     <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950/30">
-      {/* PRESENTERS SECTION */}
       <section className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <SectionHeader 
@@ -149,7 +144,7 @@ export const EventDetails: React.FC = () => {
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, margin: '-100px' }}
             className="grid lg:grid-cols-2 gap-16 max-w-6xl mx-auto"
           >
             {presenters.map((presenter, idx) => (
@@ -159,24 +154,18 @@ export const EventDetails: React.FC = () => {
                 whileHover="hover"
                 className="group relative"
               >
-                {/* Background Glow Effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-700 opacity-0 group-hover:opacity-100" />
-                
-                {/* Main Card */}
+
                 <div className="relative bg-gradient-to-br from-slate-800/50 to-slate-900/80 backdrop-blur-xl rounded-3xl p-8 border border-white/5 group-hover:border-white/10 transition-all duration-500">
-                  
-                  {/* Content Layout */}
+
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-                    
-                    {/* Image Container */}
+
                     <motion.div 
                       className="relative flex-shrink-0"
                       variants={imageVariants}
                     >
-                      {/* Outer Glow Ring */}
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur-md opacity-0 group-hover:opacity-50 transition-opacity duration-500" />
-                      
-                      {/* Image with Gradient Border */}
+
                       <div className="relative p-1 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-2xl">
                         <motion.img
                           src={presenter.photo}
@@ -186,17 +175,11 @@ export const EventDetails: React.FC = () => {
                           className="w-[200px] h-[240px] object-cover rounded-xl relative z-10 bg-gray-700"
                           whileHover={{ scale: 1.02 }}
                           transition={{ duration: 0.3 }}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDIwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik0xMDAgMTIwTDE0MCA4MEwxMDAgNDBMNjAgODBMMTAwIDEyMFoiIGZpbGw9IiA2QjcyOEYiLz4KPC9zdmc+';
-                          }}
                         />
-                        
-                        {/* Shine Overlay */}
+
                         <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 rounded-xl z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       </div>
-                      
-                      {/* Decorative Elements */}
+
                       <motion.div
                         initial={{ scale: 0, rotate: -45 }}
                         whileInView={{ scale: 1, rotate: 0 }}
@@ -209,9 +192,8 @@ export const EventDetails: React.FC = () => {
                       </motion.div>
                     </motion.div>
 
-                    {/* Text Content */}
                     <div className="flex-1 text-center md:text-left">
-                      {/* Role Badge */}
+
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -224,7 +206,6 @@ export const EventDetails: React.FC = () => {
                         </span>
                       </motion.div>
 
-                      {/* Name */}
                       <motion.h3
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -234,7 +215,6 @@ export const EventDetails: React.FC = () => {
                         {presenter.name}
                       </motion.h3>
 
-                      {/* Achievement */}
                       <motion.p
                         initial={{ opacity: 0, y: 5 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -254,7 +234,6 @@ export const EventDetails: React.FC = () => {
                         )}
                       </motion.p>
 
-                      {/* Bio */}
                       <motion.p
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -264,7 +243,6 @@ export const EventDetails: React.FC = () => {
                         {presenter.bio}
                       </motion.p>
 
-                      {/* Specialized Tags */}
                       <motion.div
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
@@ -304,7 +282,6 @@ export const EventDetails: React.FC = () => {
         </div>
       </section>
 
-      {/* EVENT DETAILS SECTION */}
       <section className="py-20 px-6 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
           <SectionHeader 
@@ -330,12 +307,10 @@ export const EventDetails: React.FC = () => {
                   className="group"
                 >
                   <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/80 backdrop-blur-xl rounded-2xl p-8 border border-white/5 hover:border-white/10 transition-all duration-500 h-full relative overflow-hidden">
-                    {/* Animated Background */}
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    
-                    {/* Animated Side Bar */}
+
                     <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 scale-y-0 group-hover:scale-y-100 origin-top transition-transform duration-500" />
-                    
+
                     <Icon className="w-10 h-10 text-blue-400 mb-4 group-hover:scale-110 group-hover:text-purple-400 transition-all duration-300 relative z-10" />
                     <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 relative z-10">{item.title}</p>
                     <p className="text-white font-bold text-lg relative z-10">{item.value}</p>
