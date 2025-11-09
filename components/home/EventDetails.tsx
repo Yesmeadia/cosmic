@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
-import { Calendar, Clock, MapPin, Users, Award, Star, GraduationCap, Rocket } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Award, Star, GraduationCap, Rocket, CircleDollarSign } from 'lucide-react';
 
 interface Presenter {
   name: string;
@@ -21,7 +21,7 @@ const presenters: Presenter[] = [
   {
     name: 'Sarim Khan',
     photo: '/1.png',
-    bio: 'The Little Einstein, a prodigy from India excelling in gravitation and Quantum Physics.',
+    bio: 'The Little Einstein, a prodigy from India excelling in gravitation and Quantum Physics.',
     achievement: 'Scientific Innovator'
   },
   {
@@ -36,7 +36,8 @@ const eventDetailsData: EventDetail[] = [
   { icon: Calendar, title: 'Date', value: 'November 30, 2025' },
   { icon: Clock, title: 'Time', value: '9:00 AM - 1:00 PM' },
   { icon: MapPin, title: 'Venue', value: 'Grand Arena, Al-Wahda Mall, Abu Dhabi' },
-  { icon: Users, title: 'Expected', value: 'Only For 100 participants' }
+  { icon: Users, title: 'Expected', value: 'Only For 100 participants' },
+  { icon: CircleDollarSign, title: 'Invest', value: '100 AED' }
 ];
 
 // Define transitions separately with proper typing
@@ -138,6 +139,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ badge, title, subtitle })
 );
 
 export const EventDetails: React.FC = () => {
+  const handleVenueClick = () => {
+    // Open Google Maps with the venue location
+    window.open(`https://maps.app.goo.gl/op366ZRsZLCB58jZA`, '_blank');
+  };
+
   return (
     <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950/30">
       {/* PRESENTERS SECTION */}
@@ -215,8 +221,6 @@ export const EventDetails: React.FC = () => {
 
                     {/* Text Content */}
                     <div className="flex-1 text-center md:text-left">
-                      {/* Role Badge */}
-
                       {/* Name */}
                       <motion.h3
                         initial={{ opacity: 0, y: 10 }}
@@ -315,6 +319,8 @@ export const EventDetails: React.FC = () => {
           >
             {eventDetailsData.map((item, idx) => {
               const Icon = item.icon;
+              const isVenue = item.title === 'Venue';
+              
               return (
                 <motion.div
                   key={idx}
@@ -323,16 +329,55 @@ export const EventDetails: React.FC = () => {
                   transition={{ duration: 0.3 }}
                   className="group"
                 >
-                  <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/80 backdrop-blur-xl rounded-2xl p-8 border border-white/5 hover:border-white/10 transition-all duration-500 h-full relative overflow-hidden">
+                  <div 
+                    className={`bg-gradient-to-br from-slate-800/50 to-slate-900/80 backdrop-blur-xl rounded-2xl p-8 border border-white/5 hover:border-white/10 transition-all duration-500 h-full relative overflow-hidden ${
+                      isVenue ? 'cursor-pointer hover:from-blue-800/30 hover:to-purple-800/30' : ''
+                    }`}
+                    onClick={isVenue ? handleVenueClick : undefined}
+                  >
                     {/* Animated Background */}
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     
                     {/* Animated Side Bar */}
-                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 scale-y-0 group-hover:scale-y-100 origin-top transition-transform duration-500" />
+                    <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b scale-y-0 group-hover:scale-y-100 origin-top transition-transform duration-500 ${
+                      isVenue ? 'from-blue-400 to-purple-500' : 'from-blue-500 to-purple-500'
+                    }`} />
                     
-                    <Icon className="w-10 h-10 text-blue-400 mb-4 group-hover:scale-110 group-hover:text-purple-400 transition-all duration-300 relative z-10" />
-                    <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 relative z-10">{item.title}</p>
-                    <p className="text-white font-bold text-lg relative z-10">{item.value}</p>
+                    <Icon className={`w-10 h-10 mb-4 group-hover:scale-110 transition-all duration-300 relative z-10 ${
+                      isVenue ? 'text-blue-400 group-hover:text-blue-300' : 'text-blue-400 group-hover:text-purple-400'
+                    }`} />
+                    
+                    <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 relative z-10">
+                      {item.title}
+                    </p>
+                    
+                    <p className={`font-bold text-lg relative z-10 ${
+                      isVenue 
+                        ? 'text-blue-300 group-hover:text-blue-200 transition-colors duration-300' 
+                        : 'text-white'
+                    }`}>
+                      {item.value}
+                      {isVenue && (
+                        <span className="ml-2 text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          ↗
+                        </span>
+                      )}
+                    </p>
+
+                    {/* Tooltip for venue */}
+                    {isVenue && (
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black/90 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none z-20">
+                        Click to open in Google Maps
+                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-2 h-2 bg-black/90 rotate-45"></div>
+                      </div>
+                    )}
+
+                    {/* Additional hint for clickable venue */}
+                    {isVenue && (
+                      <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <MapPin className="w-4 h-4 text-blue-400" />
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               );
