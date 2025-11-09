@@ -21,7 +21,7 @@ const presenters: Presenter[] = [
   {
     name: 'Sarim Khan',
     photo: '/1.png',
-    bio: 'The Little Einstein, a young prodigy from India excelling in gravitation and Quantum Physics.',
+    bio: 'The Little Einstein, a prodigy from India excelling in gravitation and Quantum Physics.',
     achievement: 'Scientific Innovator'
   },
   {

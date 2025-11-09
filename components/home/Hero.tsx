@@ -39,7 +39,7 @@ export const Hero: React.FC = () => {
           </div>
 
           <p className="text-xl mb-8 leading-relaxed">
-            An event of talks and interaction by 2 prodigies of India - the Little Einstein Mr. Sarim Khan and Grant Awardee from George Mason University -USA, Mr. Habel Anwar - verily energizing sessions for the secondary level Science enthusiast students, especially in Quantum Physics and Astro-Physics.
+            An event of talks and interaction by two prodigies of India - the Little Einstein Mr. Sarim Khan and Grant Awardee from George Mason University -USA, Mr. Habel Anwar - verily energizing sessions for the secondary level Science enthusiast students, especially in Quantum Physics and Astro-Physics.
           </p>
 
           <Button onClick={() => router.push('/register')} className="mt-4">
