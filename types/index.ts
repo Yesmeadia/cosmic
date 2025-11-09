@@ -7,6 +7,7 @@ export interface Registration {
   class: string;
   school: string;
   fatherName: string;
+  fathermobile: string;
   motherName: string;
   attendingParent: 'Father' | 'Mother' | 'Both' | 'Others';
   paymentStatus: 'pending' | 'paid' | 'not-completed';
@@ -14,7 +15,7 @@ export interface Registration {
   timestamp: string;
   updatedAt?: string;
   gender?: string;
-    isWaitlist?: boolean;
+  isWaitlist?: boolean;
 }
 
 export interface User {
