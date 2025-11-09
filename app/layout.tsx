@@ -30,7 +30,6 @@ export default function RootLayout({
           }}
         />
         <meta name="google-site-verification" content="tQABBGtQhIDRkNUCITfLcauClDDhhaaYbfYYC2_CSi8" />
-        <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-QR13SN972H"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
