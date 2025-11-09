@@ -36,22 +36,6 @@ export default function HomePage() {
                 priority
               />
             </motion.div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/login')}
-                className="w-10 h-10 rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 flex items-center justify-center transition-all hover:shadow-lg hover:shadow-purple-500/30"
-                aria-label="Admin Login"
-              >
-                <User className="w-5 h-5 text-purple-300" />
-              </button>
-              <button
-                onClick={() => router.push('/register')}
-                className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/50 transition-all"
-                aria-label="Register Now"
-              >
-                <UserPlus className="w-5 h-5 text-white" />
-              </button>
-            </div>
           </div>
         </div>
       </nav>
