@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Home, ArrowLeft, SearchX } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -8,18 +8,21 @@ export default function NotFound() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [sparkles, setSparkles] = useState<{ left: string; top: string }[]>([]);
+  const pathname = usePathname();
 
   useEffect(() => {
     // Mark as mounted to prevent SSR mismatch
-    setIsMounted(true);
+    // This effect runs only once after the initial render on the client.
+    // The state update here is safe as it's not directly triggered by a prop/state change
+    // that would cause a re-render loop. It's for client-side hydration.
+    if (!isMounted) {
+      setIsMounted(true);
+    }
 
     // Generate random sparkle positions only on client
-    const randomPositions = Array.from({ length: 15 }).map(() => ({
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-    }));
-    setSparkles(randomPositions);
-  }, []);
+    const newSparkles = Array.from({ length: 15 }).map(() => ({ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }));
+    setSparkles(newSparkles);
+  }, [isMounted, pathname]); // Re-run if path changes or if it wasn't mounted initially
 
   const floatingShapes = [
     { size: 'w-72 h-72', position: 'top-0 -left-20', delay: 0, color: 'bg-indigo-500' },
@@ -149,7 +152,7 @@ export default function NotFound() {
                 Page Not Found
               </h2>
               <p className="text-purple-200 text-lg mb-8 max-w-md mx-auto">
-                Oops! The page you're looking for seems to have drifted into the cosmic void.
+                Oops! The page you&apos;re looking for seems to have drifted into the cosmic void.
               </p>
             </motion.div>
 
@@ -200,7 +203,7 @@ export default function NotFound() {
           transition={{ delay: 0.8 }}
           className="mt-6 text-center text-purple-300/60 text-xs"
         >
-          <p>Lost in space? We'll help you find your way back.</p>
+          <p>Lost in space? We&apos;ll help you find your way back.</p>
         </motion.div>
       </motion.div>
     </div>
