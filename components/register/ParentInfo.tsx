@@ -63,7 +63,7 @@ export const ParentInfo: React.FC<ParentInfoProps> = ({ formData, onChange }) =>
           required
           value={safeFormData.fathermobile}
           onChange={(e) => onChange('fathermobile', e.target.value)}
-          placeholder="10-digit mobile number"
+          placeholder="Mobile number"
           pattern="[0-9]{10}"
         />
       </div>

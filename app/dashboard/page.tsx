@@ -1,15 +1,14 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { onAuthChange } from '@/lib/auth';
-import { getRegistrations } from '@/lib/firestore';
+import { getRegistrationsWithStats } from '@/lib/firestore';
 import { Registration, FilterState, Stats } from '@/types';
 import { Header } from '@/components/dashboard/Header';
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { Filters } from '@/components/dashboard/Filters';
-import { DataTable } from '@/components/dashboard/DataTable';
+import { RegistrationTable } from '@/components/dashboard/DataTable';
 import { Visualizations } from '@/components/dashboard/Visualizations';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { PaymentStatusModal } from '@/components/dashboard/PaymentStatusModal';
@@ -20,6 +19,13 @@ export default function DashboardPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [stats, setStats] = useState<Stats>({
+    total: 0,
+    byClass: {},
+    byParent: {},
+    byPaymentStatus: { paid: 0, pending: 0, 'not-completed': 0 },
+    waitlistCount: 0
+  });
   const [filter, setFilter] = useState<FilterState>({
     class: '',
     attendingParent: '',
@@ -35,15 +41,20 @@ export default function DashboardPage() {
         loadData();
       }
     });
-
     return () => unsubscribe();
   }, [router]);
 
   const loadData = async () => {
     setLoading(true);
-    const data = await getRegistrations();
-    setRegistrations(data);
-    setLoading(false);
+    try {
+      const { registrations, stats } = await getRegistrationsWithStats();
+      setRegistrations(registrations);
+      setStats(stats);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditPayment = (registration: Registration) => {
@@ -58,6 +69,7 @@ export default function DashboardPage() {
 
   const handleUpdateSuccess = () => {
     loadData(); // Reload data after update
+    handleCloseModal(); // Close modal
   };
 
   const filteredData = registrations.filter(reg => {
@@ -75,26 +87,6 @@ export default function DashboardPage() {
     }
     return true;
   });
-
-  // Safe stats calculation with default values
-  const stats: Stats = {
-    total: registrations.length,
-    byClass: registrations.reduce((acc, r) => {
-      const className = r.class || 'Unknown';
-      acc[className] = (acc[className] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>),
-    byParent: registrations.reduce((acc, r) => {
-      const parentType = r.attendingParent || 'Unknown';
-      acc[parentType] = (acc[parentType] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>),
-    byPaymentStatus: registrations.reduce((acc, r) => {
-      const status = r.paymentStatus || 'unknown';
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>)
-  };
 
   if (loading) {
     return (
@@ -116,9 +108,9 @@ export default function DashboardPage() {
         <div className="container mx-auto px-6 py-8">
           <StatsCards stats={stats} />
           <Filters filter={filter} onFilterChange={setFilter} data={filteredData} />
-          <DataTable 
-            data={filteredData} 
-            loading={false} 
+          <RegistrationTable 
+            registrations={filteredData}
+            onUpdate={loadData}
             onEditPayment={handleEditPayment}
           />
           <Visualizations stats={stats} />
@@ -131,6 +123,7 @@ export default function DashboardPage() {
         registration={selectedRegistration}
         onUpdate={handleUpdateSuccess}
       />
+
       <footer className="text-center text-semibold text-blue-900 py-4">
         &copy; {new Date().getFullYear()} YES INDIA FOUNDATION. All rights reserved.
       </footer>

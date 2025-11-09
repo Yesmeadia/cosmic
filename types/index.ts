@@ -14,6 +14,7 @@ export interface Registration {
   timestamp: string;
   updatedAt?: string;
   gender?: string;
+    isWaitlist?: boolean;
 }
 
 export interface User {
@@ -32,5 +33,11 @@ export interface Stats {
   total: number;
   byClass: Record<string, number>;
   byParent: Record<string, number>;
-  byPaymentStatus: Record<string, number>;
+  byPaymentStatus: {
+    paid: number;
+    pending: number;
+    'not-completed': number;
+    [key: string]: number;
+  };
+  waitlistCount?: number;
 }

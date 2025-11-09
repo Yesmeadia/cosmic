@@ -1,96 +1,148 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Edit } from 'lucide-react';
+import React, { useState } from 'react';
 import { Registration } from '@/types';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { Trash2, Clock, CheckCircle, XCircle, Calendar, Edit } from 'lucide-react';
+import { deleteRegistration } from '@/lib/firestore';
 
-interface DataTableProps {
-  data: Registration[];
-  loading: boolean;
-  onEditPayment: (registration: Registration) => void;
+interface RegistrationTableProps {
+  registrations: Registration[];
+  onUpdate: () => void;
+  onEditPayment?: (registration: Registration) => void;
 }
 
-export const DataTable: React.FC<DataTableProps> = ({ data, loading, onEditPayment }) => {
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-        <LoadingSpinner size="lg" />
-        <p className="mt-4 text-gray-600">Loading registrations...</p>
-      </div>
-    );
-  }
+export const RegistrationTable: React.FC<RegistrationTableProps> = ({ 
+  registrations, 
+  onUpdate,
+  onEditPayment 
+}) => {
+  const [filter, setFilter] = useState<'all' | 'confirmed' | 'waitlist'>('all');
 
-  if (data.length === 0) {
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-12 text-center text-gray-500">
-        No registrations found matching your filters.
-      </div>
-    );
-  }
+  const handleDelete = async (id: string, studentName: string) => {
+    if (confirm(`Are you sure you want to delete registration for ${studentName}?`)) {
+      const result = await deleteRegistration(id);
+      if (result.success) {
+        onUpdate();
+      } else {
+        alert('Failed to delete registration. Please try again.');
+      }
+    }
+  };
 
-  const getPaymentStatusBadge = (status: string | undefined) => {
-    // Provide default value if status is undefined
-    const safeStatus = status || 'pending';
-    
+  const getPaymentBadge = (status?: string, transactionRef?: string) => {
     const styles = {
-      paid: 'bg-green-100 text-green-800 border-green-200',
-      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'not-completed': 'bg-red-100 text-red-800 border-red-200'
-    };
-    
-    const labels = {
-      paid: 'PAID',
-      pending: 'PENDING',
-      'not-completed': 'NOT COMPLETED'
+      paid: 'bg-green-100 text-green-800 border-green-300',
+      pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      'not-completed': 'bg-red-100 text-red-800 border-red-300'
     };
 
+    const icons = {
+      paid: <CheckCircle className="w-4 h-4" />,
+      pending: <Clock className="w-4 h-4" />,
+      'not-completed': <XCircle className="w-4 h-4" />
+    };
+
+    const labels = {
+      paid: 'Paid',
+      pending: 'Pending',
+      'not-completed': 'Not Completed'
+    };
+
+    const currentStatus = (status || 'pending') as keyof typeof styles;
+
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${styles[safeStatus as keyof typeof styles] || styles.pending}`}>
-        {labels[safeStatus as keyof typeof labels] || 'PENDING'}
-      </span>
+      <div className="space-y-1">
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border ${styles[currentStatus]}`}>
+          {icons[currentStatus]}
+          {labels[currentStatus]}
+        </span>
+        {currentStatus === 'paid' && transactionRef && (
+          <div className="text-xs text-gray-600 font-mono bg-gray-50 px-2 py-1 rounded border border-gray-200">
+            Ref: {transactionRef}
+          </div>
+        )}
+      </div>
     );
   };
 
+  const filteredRegistrations = registrations.filter(reg => {
+    if (filter === 'confirmed') return !reg.isWaitlist;
+    if (filter === 'waitlist') return reg.isWaitlist;
+    return true;
+  });
+
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Registrations ({data.length})
-        </h3>
+      {/* Filter Tabs */}
+      <div className="bg-gray-50 border-b border-gray-200 px-6 py-3">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+              filter === 'all'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            All ({registrations.length})
+          </button>
+          <button
+            onClick={() => setFilter('confirmed')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+              filter === 'confirmed'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Confirmed ({registrations.filter(r => !r.isWaitlist).length})
+          </button>
+          <button
+            onClick={() => setFilter('waitlist')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+              filter === 'waitlist'
+                ? 'bg-amber-600 text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Waitlist ({registrations.filter(r => r.isWaitlist).length})
+          </button>
+        </div>
       </div>
 
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ID No
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
+                Student Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Contact
+                Class
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                School and Class 
+                School
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Parents
+                Mobile
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Attending
+                Email
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Payment Status
+                Parent
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Transaction Ref
+                Payment
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Timestamp
+                Date
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -98,73 +150,86 @@ export const DataTable: React.FC<DataTableProps> = ({ data, loading, onEditPayme
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((reg, idx) => (
-              <motion.tr
-                key={reg.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {reg.id ? reg.id.toString().substring(0, 7).toUpperCase() : '-'}
+            {filteredRegistrations.map((registration) => (
+              <tr key={registration.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {registration.isWaitlist ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-300">
+                      <Clock className="w-3 h-3" />
+                      Waitlist
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300">
+                      <CheckCircle className="w-3 h-3" />
+                      Confirmed
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {registration.id ? registration.id.toString().substring(0, 7).toUpperCase() : '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
-                    {reg.studentName || '-'}
+                    {registration.studentName}
                   </div>
-                  <div className="text-sm text-gray-500">
-                    {reg.gender || '-'}
+                  <div className="text-xs text-gray-500">{registration.gender}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {registration.class}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                  {registration.school}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {registration.mobile}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                  {registration.email}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{registration.attendingParent}</div>
+                  <div className="text-xs text-gray-500">{registration.fathermobile}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    {getPaymentBadge(registration.paymentStatus, registration.transactionReference)}
+                    {onEditPayment && (
+                      <button
+                        onClick={() => onEditPayment(registration)}
+                        className="text-indigo-600 hover:text-indigo-900 transition-colors flex-shrink-0"
+                        title="Edit payment details"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900"> Mobile: {reg.mobile || '-'}</div>
-                  <div className="text-sm text-gray-500"> Email: {reg.email || '-'}</div>
-                  <div className="text-sm text-gray-500"> WhatsApp: {reg.whatsapp || '-'}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{reg.school || '-'}</div>
-                  <div className="text-sm text-gray-500">Class: {reg.class || '-'}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">F: {reg.fatherName || '-'}</div>
-                  <div className="text-sm text-gray-500">M: {reg.motherName || '-'}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    reg.attendingParent === 'Both' ? 'bg-green-100 text-green-800' :
-                    reg.attendingParent === 'Father' ? 'bg-blue-100 text-blue-800' :
-                    reg.attendingParent === 'Mother' ? 'bg-pink-100 text-pink-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {reg.attendingParent || 'Unknown'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {getPaymentStatusBadge(reg.paymentStatus)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-gray-900 font-mono">
-                    {reg.transactionReference || '-'}
-                  </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {reg.timestamp ? new Date(reg.timestamp).toLocaleString() : '-'}
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {new Date(registration.timestamp).toLocaleDateString()}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <button
-                    onClick={() => onEditPayment(reg)}
-                    className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium transition-colors"
+                    onClick={() => handleDelete(registration.id, registration.studentName)}
+                    className="text-red-600 hover:text-red-900 transition-colors"
+                    title="Delete registration"
                   >
-                    <Edit className="w-4 h-4" />
-                    Edit
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </td>
-              </motion.tr>
+              </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {filteredRegistrations.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No registrations found</p>
+        </div>
+      )}
     </div>
   );
-};
+}

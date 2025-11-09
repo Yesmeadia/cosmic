@@ -90,7 +90,7 @@ export const StudentInfo: React.FC<StudentInfoProps> = ({ formData, onChange }) 
           required
           value={safeFormData.mobile}
           onChange={(e) => onChange('mobile', e.target.value)}
-          placeholder="10-digit mobile number"
+          placeholder="Mobile number"
           pattern="[0-9]{10}"
         />
 
@@ -101,7 +101,7 @@ export const StudentInfo: React.FC<StudentInfoProps> = ({ formData, onChange }) 
             required
             value={safeFormData.whatsapp}
             onChange={(e) => onChange('whatsapp', e.target.value)}
-            placeholder="10-digit WhatsApp number"
+            placeholder="WhatsApp number"
             pattern="[0-9]{10}"
             disabled={safeFormData.whatsappSameAsMobile}
           />

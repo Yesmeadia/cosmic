@@ -1,19 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Home } from 'lucide-react';
 import { StudentInfo } from './StudentInfo';
 import { ParentInfo } from './ParentInfo';
 import { SuccessMessage } from './SuccessMessage';
-import { addRegistration } from '@/lib/firestore';
+import { addRegistration, getRegistrationCount } from '@/lib/firestore';
 
 export const RegistrationForm: React.FC = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isWaitlist, setIsWaitlist] = useState(false);
+  const [registrationCount, setRegistrationCount] = useState(0);
   const [formData, setFormData] = useState({
     studentName: '',
     mobile: '',
@@ -28,6 +30,19 @@ export const RegistrationForm: React.FC = () => {
     gender: '',
     whatsappSameAsMobile: false
   });
+
+  useEffect(() => {
+    // Fetch current registration count
+    const fetchCount = async () => {
+      try {
+        const count = await getRegistrationCount();
+        setRegistrationCount(count);
+      } catch (error) {
+        console.error('Error fetching count:', error);
+      }
+    };
+    fetchCount();
+  }, []);
 
   const handleChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -47,14 +62,20 @@ export const RegistrationForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Check current count before submission
+      const currentCount = await getRegistrationCount();
+      const isWaitlistRegistration = currentCount >= 100;
+      
       const result = await addRegistration({
         ...formData,
-        attendingParent: formData.attendingParent as 'Father' | 'Mother' | 'Both' | 'Others'
+        attendingParent: formData.attendingParent as 'Father' | 'Mother' | 'Both' | 'Others',
+        isWaitlist: isWaitlistRegistration
       });
       
       if (result.success) {
+        setIsWaitlist(isWaitlistRegistration);
         setSubmitted(true);
-        setTimeout(() => router.push('/'), 3000);
+        setTimeout(() => router.push('/'), 5000);
       } else {
         alert('Error submitting form. Please try again.');
       }
@@ -67,7 +88,7 @@ export const RegistrationForm: React.FC = () => {
   };
 
   if (submitted) {
-    return <SuccessMessage />;
+    return <SuccessMessage isWaitlist={isWaitlist} />;
   }
 
   return (
@@ -78,16 +99,18 @@ export const RegistrationForm: React.FC = () => {
       <div className="min-h-screen bg-black/40 backdrop-blur-sm absolute inset-0" />
       
       <div className="max-w-3xl mx-auto relative z-10">
-        {/* Back Button */}
-        <motion.button
-          onClick={() => router.push('/')}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-8 flex items-center gap-2 bg-white/90 backdrop-blur-sm hover:bg-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all font-semibold text-gray-800 group"
-        >
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          Back to Home
-        </motion.button>
+        {/* Registration Status Banner */}
+        {registrationCount >= 100 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 bg-amber-500/95 backdrop-blur-md rounded-xl shadow-lg p-4 border-2 border-amber-600"
+          >
+            <p className="text-center text-white font-semibold">
+              ⚠️ Regular registrations are full ({registrationCount}/100). New registrations will be added to the waitlist.
+            </p>
+          </motion.div>
+        )}
 
         {/* Progress Indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
@@ -178,11 +201,25 @@ export const RegistrationForm: React.FC = () => {
           </div>
         </motion.div>
 
+        {/* Back to Home Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-8 flex justify-center"
+        >
+          <button
+            onClick={() => router.push('/')}
+            className="group relative px-8 py-3 bg-white/10 backdrop-blur-md border-2 border-white/30 text-white font-semibold rounded-full hover:bg-white/20 hover:border-white/50 transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <Home className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform" />
+            <span className="relative z-10">Back to Home</span>
+          </button>
+        </motion.div>
+
         {/* Footer Info */}
-        <p className="text-center text-sm text-white/90 mt-8 font-medium drop-shadow-lg">
-          Your information is secure and will never be shared.
-        </p>
-        <footer className="text-center text-semibold text-blue-900 mt-4">
+        <footer className="text-center text-semibold text-white/80 mt-4 drop-shadow-lg">
           &copy; {new Date().getFullYear()} YES India Foundation. All rights reserved.
         </footer>
       </div>

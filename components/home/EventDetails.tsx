@@ -8,7 +8,6 @@ interface Presenter {
   name: string;
   photo: string;
   bio: string;
-  role: string;
   achievement: string;
 }
 
@@ -22,16 +21,14 @@ const presenters: Presenter[] = [
   {
     name: 'Sarim Khan',
     photo: '/1.png',
-    bio: 'The Little Einstein, a young prodigy from India excelling in advanced scientific concepts and innovation.',
-    role: 'Young Prodigy',
+    bio: 'The Little Einstein, a young prodigy from India excelling in gravitation and Quantum Physics.',
     achievement: 'Scientific Innovator'
   },
   {
     name: 'Habel Anwar',
     photo: '/2.png',
-    bio: 'Grant Awardee from George Mason University, USA, known for his groundbreaking research in astrophysics and quantum mechanics.',
-    role: 'Research Scholar',
-    achievement: 'George Mason University'
+    bio: 'Grant Awardee from George Mason University-USA, known for his groundbreaking research in Quantum Relativity and Superstring Theory.',
+    achievement: 'Scientific Innovator'
   }
 ];
 
@@ -219,17 +216,6 @@ export const EventDetails: React.FC = () => {
                     {/* Text Content */}
                     <div className="flex-1 text-center md:text-left">
                       {/* Role Badge */}
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 + idx * 0.1, duration: 0.4 }}
-                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-500/30 mb-4"
-                      >
-                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                        <span className="text-blue-300 text-xs font-semibold uppercase tracking-wide">
-                          {presenter.role}
-                        </span>
-                      </motion.div>
 
                       {/* Name */}
                       <motion.h3
