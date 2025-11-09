@@ -13,6 +13,7 @@ export interface Registration {
   transactionReference?: string;
   timestamp: string;
   updatedAt?: string;
+  gender?: string;
 }
 
 export interface User {
