@@ -1,6 +1,3 @@
-// ==========================================
-// FILE: components/dashboard/PaymentStatusModal.tsx
-// ==========================================
 
 'use client';
 

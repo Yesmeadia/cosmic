@@ -17,42 +17,6 @@ export default function HomePage() {
       exit={{ opacity: 0 }}
       className="bg-slate-900"
     >
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-purple-500/30">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="flex items-center gap-4"
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">YIF</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                  Cosmic Confluence
-                </h1>
-                <p className="text-xs text-purple-300">YES INDIA FOUNDATION</p>
-              </div>
-            </motion.div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/login')}
-                className="text-purple-300 hover:text-purple-100 font-medium transition-colors"
-              >
-                Admin Login
-              </button>
-              <button
-                onClick={() => router.push('/register')}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full hover:shadow-lg hover:shadow-purple-500/50 transition-all font-medium"
-              >
-                Register Now
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* Page Sections */}
       <Hero />

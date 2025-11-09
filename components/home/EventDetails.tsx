@@ -5,10 +5,10 @@ import { motion } from 'framer-motion';
 import { Calendar, Clock, MapPin, Users } from 'lucide-react';
 
 const details = [
-  { icon: Calendar, title: 'Date', value: 'December 15, 2025', color: 'indigo' },
-  { icon: Clock, title: 'Time', value: '9:00 AM - 5:00 PM', color: 'purple' },
-  { icon: MapPin, title: 'Venue', value: 'Grand Convention Center', color: 'pink' },
-  { icon: Users, title: 'Expected', value: '500+ Students', color: 'blue' }
+  { icon: Calendar, title: 'Date', value: 'November 30, 2025', color: 'indigo' },
+  { icon: Clock, title: 'Time', value: '9:00 AM - 1:00 PM', color: 'purple' },
+  { icon: MapPin, title: 'Venue', value: 'Grand Arena, Al-Wahda Mall, Abu Dhabi', color: 'pink' },
+  { icon: Users, title: 'Expected', value: 'Only For 100 participants', color: 'blue' }
 ];
 
 export const EventDetails: React.FC = () => {
@@ -18,7 +18,7 @@ export const EventDetails: React.FC = () => {
         initial={{ y: 20, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
         viewport={{ once: true }}
-        className="text-3xl font-bold text-center text-gray-800 mb-12"
+        className="text-3xl font-bold text-center text-white mb-12"
       >
         Event Highlights
       </motion.h3>
