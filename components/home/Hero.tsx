@@ -7,17 +7,21 @@ import { Button } from '../ui/Button';
 
 export const Hero: React.FC = () => {
   const router = useRouter();
+
   return (
-    <section 
-      className="container mx-auto px-6 py-20 relative"
+    <section
+      className="relative flex items-center justify-center min-h-screen px-6 md:px-12 text-white"
       style={{
         backgroundImage: 'url(/bg.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
       }}
     >
-      <div className="grid md:grid-cols-2 gap-12 items-center">
+      <div className="absolute inset-0 bg-black/60" /> {/* optional overlay for better text contrast */}
+
+      <div className="relative z-10 container mx-auto grid md:grid-cols-2 gap-12 items-center">
+        {/* Left Content */}
         <motion.div
           initial={{ x: -50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -27,25 +31,30 @@ export const Hero: React.FC = () => {
             <Image
               src="/cosmic.png"
               alt="Cosmic Confluence"
-              width={400}
-              height={100}
+              width={500}
+              height={200}
               className="rounded-lg"
               priority
             />
           </div>
-          <p className="text-xl text-white mb-8">
-            A session of talks and interaction of 2 young prodigies of India - the Little Einstein Mr. Sarim Khan from Uthar Pradesh and Grant Awardee (from George Mason University -USA) Mr. Habel Anwar from Kerala -  verily energizing sessions for the secondary level Science enthusiast students, especially Quantum Physics and Astro-Physics.
+
+          <p className="text-xl mb-8 leading-relaxed">
+            An event of talks and interaction by 2 prodigies of India - the Little Einstein Mr. Sarim Khan and Grant Awardee from George Mason University -USA, Mr. Habel Anwar - verily energizing sessions for the secondary level Science enthusiast students, especially in Quantum Physics and Astro-Physics.
           </p>
-          <Button onClick={() => router.push('/register')}>
+
+          <Button onClick={() => router.push('/register')} className="mt-4">
             Register Now →
           </Button>
         </motion.div>
+
+        {/* Right Side Placeholder (for future image/animation/etc.) */}
         <motion.div
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="relative"
+          className="relative hidden md:block"
         >
+          {/* You can add an image, animation, or decorative element here */}
         </motion.div>
       </div>
     </section>

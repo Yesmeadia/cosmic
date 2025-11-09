@@ -131,6 +131,9 @@ export default function DashboardPage() {
         registration={selectedRegistration}
         onUpdate={handleUpdateSuccess}
       />
+      <footer className="text-center text-semibold text-blue-900 py-4">
+        &copy; {new Date().getFullYear()} YES INDIA FOUNDATION. All rights reserved.
+      </footer>
     </>
   );
 }

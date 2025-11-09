@@ -71,27 +71,34 @@ export const RegistrationForm: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed py-8 px-4"
+      style={{ backgroundImage: 'url(/bg.jpg)' }}
+    >
+      <div className="min-h-screen bg-black/40 backdrop-blur-sm absolute inset-0" />
+      
+      <div className="max-w-3xl mx-auto relative z-10">
         {/* Back Button */}
-        <button
+        <motion.button
           onClick={() => router.push('/')}
-          className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition-colors"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="mb-8 flex items-center gap-2 bg-white/90 backdrop-blur-sm hover:bg-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all font-semibold text-gray-800 group"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           Back to Home
-        </button>
+        </motion.button>
 
         {/* Progress Indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className={`flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all ${
-            currentStep >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+          <div className={`flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all shadow-lg ${
+            currentStep >= 1 ? 'bg-indigo-600 text-white' : 'bg-white/90 text-gray-600'
           }`}>
             {currentStep > 1 ? <CheckCircle className="w-6 h-6" /> : '1'}
           </div>
-          <div className={`h-1 w-12 ${currentStep >= 2 ? 'bg-indigo-600' : 'bg-gray-200'}`} />
-          <div className={`flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all ${
-            currentStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+          <div className={`h-1 w-12 rounded-full ${currentStep >= 2 ? 'bg-indigo-600' : 'bg-white/50'}`} />
+          <div className={`flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all shadow-lg ${
+            currentStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-white/90 text-gray-600'
           }`}>
             2
           </div>
@@ -101,7 +108,7 @@ export const RegistrationForm: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-2xl overflow-hidden"
+          className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden"
         >
           <div className="p-8 md:p-12">
             {/* Step 1: Student Info */}
@@ -172,9 +179,12 @@ export const RegistrationForm: React.FC = () => {
         </motion.div>
 
         {/* Footer Info */}
-        <p className="text-center text-sm text-gray-500 mt-8">
+        <p className="text-center text-sm text-white/90 mt-8 font-medium drop-shadow-lg">
           Your information is secure and will never be shared.
         </p>
+        <footer className="text-center text-semibold text-blue-900 mt-4">
+          &copy; {new Date().getFullYear()} YES India Foundation. All rights reserved.
+        </footer>
       </div>
     </div>
   );

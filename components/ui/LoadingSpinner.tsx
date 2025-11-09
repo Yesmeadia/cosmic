@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
-export const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ 
-  size = 'md' 
+export const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({
+  size = 'md'
 }) => {
   const sizes = {
     sm: 'h-6 w-6',
@@ -13,7 +14,13 @@ export const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({
 
   return (
     <div className="flex items-center justify-center">
-      <div className={`${sizes[size]} border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin`} />
+      <Image
+        src="/round.png"     
+        alt="loading"
+        className={`animate-spin ${sizes[size]}`}
+        width={64}
+        height={64}
+      />
     </div>
   );
 };

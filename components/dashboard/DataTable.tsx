@@ -66,16 +66,16 @@ export const DataTable: React.FC<DataTableProps> = ({ data, loading, onEditPayme
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Student
+                ID No
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Contact
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Class
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                School
+                School and Class 
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Parents
@@ -106,22 +106,25 @@ export const DataTable: React.FC<DataTableProps> = ({ data, loading, onEditPayme
                 transition={{ delay: idx * 0.05 }}
                 className="hover:bg-gray-50 transition-colors"
               >
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {reg.id ? reg.id.toString().substring(0, 7).toUpperCase() : '-'}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {reg.studentName || '-'}
                   </div>
+                  <div className="text-sm text-gray-500">
+                    {reg.gender || '-'}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{reg.mobile || '-'}</div>
-                  <div className="text-sm text-gray-500">{reg.email || '-'}</div>
+                  <div className="text-sm text-gray-900"> Mobile: {reg.mobile || '-'}</div>
+                  <div className="text-sm text-gray-500"> Email: {reg.email || '-'}</div>
+                  <div className="text-sm text-gray-500"> WhatsApp: {reg.whatsapp || '-'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
-                    {reg.class || 'Unknown'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {reg.school || '-'}
+                  <div className="text-sm text-gray-900">{reg.school || '-'}</div>
+                  <div className="text-sm text-gray-500">Class: {reg.class || '-'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">F: {reg.fatherName || '-'}</div>

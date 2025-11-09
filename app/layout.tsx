@@ -5,7 +5,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'EduFest 2025 - Event Registration',
+  title: 'Cosmic Confluence - Event Registration',
   description: 'Register for the biggest educational event of the year',
 };
 
