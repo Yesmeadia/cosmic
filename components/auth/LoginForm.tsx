@@ -1,30 +1,74 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Lock, Mail, ArrowRight, Shield, Sparkles, Eye, EyeOff } from 'lucide-react';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { signIn } from '@/lib/auth';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+
+  const handleRecaptchaChange = (token: string | null) => {
+    setRecaptchaToken(token);
+    if (error === 'Please complete the reCAPTCHA verification') {
+      setError('');
+    }
+  };
 
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setError('');
+
+    // Validate reCAPTCHA
+    if (!recaptchaToken) {
+      setError('Please complete the reCAPTCHA verification');
+      return;
+    }
+
     setLoading(true);
     
-    const result = await signIn(email, password);
-    
-    if (result.success) {
-      router.push('/dashboard');
-    } else {
-      setError(result.error || 'Invalid credentials');
+    try {
+      // Verify reCAPTCHA on backend first
+      const verifyResponse = await fetch('/api/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: recaptchaToken }),
+      });
+
+      const verifyData = await verifyResponse.json();
+
+      if (!verifyData.success) {
+        setError('reCAPTCHA verification failed. Please try again.');
+        recaptchaRef.current?.reset();
+        setRecaptchaToken(null);
+        setLoading(false);
+        return;
+      }
+
+      // Proceed with sign in
+      const result = await signIn(email, password);
+      
+      if (result.success) {
+        router.push('/dashboard');
+      } else {
+        setError(result.error || 'Invalid credentials');
+        recaptchaRef.current?.reset();
+        setRecaptchaToken(null);
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     }
     
     setLoading(false);
@@ -159,13 +203,30 @@ export const LoginForm: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Submit Button */}
-          <motion.button
-            onClick={handleSubmit}
-            disabled={loading}
+          {/* reCAPTCHA */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
+            className="flex justify-center"
+          >
+            <div className="transform scale-95 origin-center">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
+                onChange={handleRecaptchaChange}
+                theme="dark"
+              />
+            </div>
+          </motion.div>
+
+          {/* Submit Button */}
+          <motion.button
+            onClick={handleSubmit}
+            disabled={loading || !recaptchaToken}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/50 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
@@ -192,7 +253,7 @@ export const LoginForm: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.7 }}
           className="mt-6 text-center"
         >
           <button
