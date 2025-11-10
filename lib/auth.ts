@@ -110,7 +110,7 @@ export const signIn = async (email: string, password: string) => {
       'message' in error &&
       typeof (error as { message: string }).message === 'string'
     ) {
-      message = (error as { message: string }).message;
+      message = (error as any).message;
     }
     return { success: false, error: message };
   }
