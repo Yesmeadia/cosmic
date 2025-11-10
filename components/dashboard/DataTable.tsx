@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { Registration } from '@/types';
-import { Trash2, Clock, CheckCircle, XCircle, Calendar, Edit } from 'lucide-react';
-import { deleteRegistration } from '@/lib/firestore';
+import { Trash2, Clock, CheckCircle, XCircle, Calendar, Edit, AlertOctagon } from 'lucide-react';
+import { deleteRegistration, moveToSpam } from '@/lib/firestore';
 
 interface RegistrationTableProps {
   registrations: Registration[];
@@ -17,6 +17,11 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
   onEditPayment 
 }) => {
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'waitlist'>('all');
+  const [spamModal, setSpamModal] = useState<{ isOpen: boolean; registration: Registration | null }>({
+    isOpen: false,
+    registration: null
+  });
+  const [spamReason, setSpamReason] = useState('');
 
   const handleDelete = async (id: string, studentName: string) => {
     if (confirm(`Are you sure you want to delete registration for ${studentName}?`)) {
@@ -26,6 +31,29 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
       } else {
         alert('Failed to delete registration. Please try again.');
       }
+    }
+  };
+
+  const openSpamModal = (registration: Registration) => {
+    setSpamModal({ isOpen: true, registration });
+    setSpamReason('');
+  };
+
+  const handleSpamSubmit = async () => {
+    if (!spamModal.registration?.id) return;
+    
+    if (!spamReason.trim()) {
+      alert('Please enter a reason for marking as spam');
+      return;
+    }
+
+    const result = await moveToSpam(spamModal.registration.id, spamReason);
+    if (result.success) {
+      setSpamModal({ isOpen: false, registration: null });
+      setSpamReason('');
+      onUpdate();
+    } else {
+      alert('Failed to move registration to spam. Please try again.');
     }
   };
 
@@ -211,13 +239,22 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <button
-                    onClick={() => handleDelete(registration.id!, registration.studentName)}
-                    className="text-red-600 hover:text-red-900 transition-colors"
-                    title="Delete registration"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openSpamModal(registration)}
+                      className="text-orange-600 hover:text-orange-900 transition-colors"
+                      title="Mark as spam"
+                    >
+                      <AlertOctagon className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(registration.id!, registration.studentName)}
+                      className="text-red-600 hover:text-red-900 transition-colors"
+                      title="Delete registration"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -228,6 +265,58 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
       {filteredRegistrations.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500">No registrations found</p>
+        </div>
+      )}
+
+      {/* Spam Modal */}
+      {spamModal.isOpen && spamModal.registration && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <AlertOctagon className="w-6 h-6 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Mark as Spam</h3>
+            </div>
+            
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600 mb-1">Student Name</p>
+              <p className="text-base font-semibold text-gray-900">{spamModal.registration.studentName}</p>
+              <p className="text-sm text-gray-500 mt-2">{spamModal.registration.email}</p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason for marking as spam <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={spamReason}
+                onChange={(e) => setSpamReason(e.target.value)}
+                placeholder="e.g., Duplicate registration, Fake information, Test entry, etc."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setSpamModal({ isOpen: false, registration: null });
+                  setSpamReason('');
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSpamSubmit}
+                disabled={!spamReason.trim()}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Mark as Spam
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

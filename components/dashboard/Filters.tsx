@@ -3,7 +3,7 @@
 import React from 'react';
 import { Filter, Download } from 'lucide-react';
 import { FilterState, Registration } from '@/types';
-import { exportToCSV } from '@/lib/firestore';
+import { exportToCSV, exportToPDF } from '@/lib/firestore';
 
 interface FiltersProps {
   filter: FilterState;
@@ -19,7 +19,7 @@ export const Filters: React.FC<FiltersProps> = ({ filter, onFilterChange, data }
         <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
       </div>
       
-      <div className="grid md:grid-cols-5 gap-4">
+      <div className="grid md:grid-cols-6 gap-4">
         <input
           type="text"
           placeholder="Search by name, email, school..."
@@ -69,6 +69,14 @@ export const Filters: React.FC<FiltersProps> = ({ filter, onFilterChange, data }
         >
           <Download className="w-5 h-5 mr-2" />
           Export CSV
+        </button>
+
+        <button
+          onClick={() => exportToPDF(data)}
+          className="flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Download className="w-5 h-5 mr-2" />
+          Export PDF
         </button>
       </div>
     </div>

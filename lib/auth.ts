@@ -16,14 +16,11 @@ let lastActivityTime: number = Date.now();
 const resetSessionTimer = () => {
   lastActivityTime = Date.now();
   
-  if (sessionTimer) {
-    clearTimeout(sessionTimer);
-  }
+  if (sessionTimer) clearTimeout(sessionTimer);
   
   sessionTimer = setTimeout(async () => {
     console.log('Session expired due to inactivity');
     await signOut();
-    // Optionally redirect to login page
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
@@ -34,7 +31,6 @@ const resetSessionTimer = () => {
 export const initSessionTimeout = () => {
   if (typeof window === 'undefined') return;
 
-  // List of events that indicate user activity
   const activityEvents = [
     'mousedown',
     'mousemove',
@@ -44,40 +40,27 @@ export const initSessionTimeout = () => {
     'click'
   ];
 
-  // Debounce function to avoid too many resets
   let debounceTimer: NodeJS.Timeout | null = null;
   const debouncedResetTimer = () => {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-    debounceTimer = setTimeout(() => {
-      resetSessionTimer();
-    }, 1000); // Reset at most once per second
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(resetSessionTimer, 1000);
   };
 
-  // Add event listeners for user activity
-  activityEvents.forEach(event => {
-    window.addEventListener(event, debouncedResetTimer, true);
-  });
+  activityEvents.forEach(event =>
+    window.addEventListener(event, debouncedResetTimer, true)
+  );
 
-  // Start the initial timer
   resetSessionTimer();
 
-  // Return cleanup function
   return () => {
-    activityEvents.forEach(event => {
-      window.removeEventListener(event, debouncedResetTimer, true);
-    });
-    if (sessionTimer) {
-      clearTimeout(sessionTimer);
-    }
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
+    activityEvents.forEach(event =>
+      window.removeEventListener(event, debouncedResetTimer, true)
+    );
+    if (sessionTimer) clearTimeout(sessionTimer);
+    if (debounceTimer) clearTimeout(debounceTimer);
   };
 };
 
-// Clear session timer
 export const clearSessionTimer = () => {
   if (sessionTimer) {
     clearTimeout(sessionTimer);
@@ -85,46 +68,60 @@ export const clearSessionTimer = () => {
   }
 };
 
-// Get remaining session time in milliseconds
 export const getRemainingSessionTime = (): number => {
   const elapsed = Date.now() - lastActivityTime;
   const remaining = SESSION_TIMEOUT - elapsed;
   return Math.max(0, remaining);
 };
 
-// Check if session is still valid
 export const isSessionValid = (): boolean => {
   return getRemainingSessionTime() > 0;
 };
 
+// ---------------------------
+// ✅ SIGN IN WITH VERIFICATION CHECK
+// ---------------------------
 export const signIn = async (email: string, password: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    
-    // Initialize session timeout after successful login
+    const user = userCredential.user;
+
+    // Reload user to get updated emailVerified state
+    await user.reload();
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      await firebaseSignOut(auth); // sign out immediately
+      return { success: false, error: 'Please verify your email before signing in.' };
+    }
+
+    // Start session tracking only for verified users
     initSessionTimeout();
-    
-    return { success: true, user: userCredential.user };
+
+    return { success: true, user };
   } catch (error: unknown) {
     console.error('Error signing in:', error);
     let message = 'Failed to sign in';
     if (error instanceof FirebaseError) {
       message = error.message;
-    } else if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
+    } else if (
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof (error as any).message === 'string'
+    ) {
       message = (error as any).message;
     }
-    return {
-      success: false,
-      error: message
-    };
+    return { success: false, error: message };
   }
 };
 
+// ---------------------------
+// ✅ SIGN OUT
+// ---------------------------
 export const signOut = async () => {
   try {
-    // Clear session timer before signing out
     clearSessionTimer();
-    
     await firebaseSignOut(auth);
     return { success: true };
   } catch (error) {
@@ -134,13 +131,24 @@ export const signOut = async () => {
   }
 };
 
+// ---------------------------
+// ✅ AUTH STATE MONITOR
+// ---------------------------
 export const onAuthChange = (callback: (user: FirebaseUser | null) => void) => {
-  return onAuthStateChanged(auth, (user) => {
+  return onAuthStateChanged(auth, async (user) => {
     if (user) {
-      // Initialize session timeout when user is authenticated
+      // Always reload to get latest verification status
+      await user.reload();
+      if (!user.emailVerified) {
+        console.warn('Email not verified, signing out...');
+        await firebaseSignOut(auth);
+        if (typeof window !== 'undefined') {
+          window.location.href = '/verify-email'; // optional route
+        }
+        return;
+      }
       initSessionTimeout();
     } else {
-      // Clear session timer when user is logged out
       clearSessionTimer();
     }
     callback(user);
