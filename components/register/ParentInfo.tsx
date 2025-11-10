@@ -1,5 +1,4 @@
 'use client';
-
 import React from 'react';
 import { Users } from 'lucide-react';
 import { Input } from '../ui/Input';
@@ -16,7 +15,7 @@ interface ParentInfoProps {
   onChange: (field: keyof ParentFormData, value: string) => void;
 }
 
-const attendingOptions = ['Father', 'Mother', 'Both', 'Others', 'None'];
+const attendingOptions = ['Father', 'Mother', 'Others', 'None'];
 
 export const ParentInfo: React.FC<ParentInfoProps> = ({ formData, onChange }) => {
   const safeFormData = {
@@ -47,7 +46,6 @@ export const ParentInfo: React.FC<ParentInfoProps> = ({ formData, onChange }) =>
           onChange={(e) => onChange('fatherName', e.target.value)}
           placeholder="Father's full name"
         />
-
         <Input
           label="Mother's Name"
           type="text"
@@ -56,7 +54,6 @@ export const ParentInfo: React.FC<ParentInfoProps> = ({ formData, onChange }) =>
           onChange={(e) => onChange('motherName', e.target.value)}
           placeholder="Mother's full name"
         />
-
         <Input
           label="Father's Mobile Number"
           type="tel"
@@ -70,7 +67,7 @@ export const ParentInfo: React.FC<ParentInfoProps> = ({ formData, onChange }) =>
 
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-4">
-          Who will be attending the program? <span className="text-red-500">*</span>
+          Who will accompany the student? <span className="text-red-500">*</span>
         </label>
         <div className="grid md:grid-cols-2 gap-3">
           {attendingOptions.map((option) => (
