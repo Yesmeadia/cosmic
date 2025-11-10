@@ -34,12 +34,6 @@ export default function LoginPage() {
     { left: '12%', top: '25%' },
   ];
 
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-6">
       {/* Background Image */}

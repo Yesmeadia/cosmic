@@ -108,9 +108,9 @@ export const signIn = async (email: string, password: string) => {
       error &&
       typeof error === 'object' &&
       'message' in error &&
-      typeof (error as any).message === 'string'
+      typeof (error as { message: string }).message === 'string'
     ) {
-      message = (error as any).message;
+      message = (error as { message: string }).message;
     }
     return { success: false, error: message };
   }

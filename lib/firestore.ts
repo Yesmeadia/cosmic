@@ -59,7 +59,7 @@ export const exportToPDF = (data: Registration[]) => {
   // Title - COSMIC CONFLUENCE
 doc.setTextColor(102, 51, 153); // Deep purple (RGB)
 doc.setFontSize(16);
-doc.setFont(undefined, 'bold');
+doc.setFont('helvetica', 'bold');
 doc.text('COSMIC CONFLUENCE', pageWidth / 2, logoY + logoHeight / 2, {
   align: 'center',
   baseline: 'middle'
@@ -68,7 +68,7 @@ doc.text('COSMIC CONFLUENCE', pageWidth / 2, logoY + logoHeight / 2, {
 // Subtitle - REGISTRATION DETAILS
 doc.setTextColor(60, 60, 60); // Dark gray
 doc.setFontSize(14);
-doc.setFont(undefined, 'normal');
+doc.setFont('helvetica', 'normal');
 doc.text('REGISTRATION DETAILS', pageWidth / 2, logoY + logoHeight / 2 + 8, {
   align: 'center',
   baseline: 'middle'
@@ -98,7 +98,7 @@ doc.text('REGISTRATION DETAILS', pageWidth / 2, logoY + logoHeight / 2 + 8, {
       cellPadding: 2
     },
     headStyles: {
-      fillColor: [41, 128, 185],
+      fillColor: [41, 128, 185], // Blue
       textColor: 255,
       fontStyle: 'bold'
     },
