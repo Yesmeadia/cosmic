@@ -81,7 +81,7 @@ export const RegistrationForm: React.FC = () => {
 
       const result = await addRegistration({
         ...formData,
-        attendingParent: formData.attendingParent as 'Father' | 'Mother' | 'Others' | 'None',
+        attendingParent: formData.attendingParent as 'Father' | 'Mother' | 'Both' | 'Others',
         isWaitlist: isWaitlistRegistration,
         registrationId: ''
       });
