@@ -291,7 +291,7 @@ export const deleteRegistration = async (id: string) => {
 };
 
 // Move registration to spam
-export const moveToSpam = async (id: string): Promise<{ success: boolean; error?: unknown }> => {
+export const moveToSpam = async (id: string, spamReason: string): Promise<{ success: boolean; error?: unknown }> => {
   try {
     // Get the registration data
     const registrationRef = doc(db, 'registrations', id);
