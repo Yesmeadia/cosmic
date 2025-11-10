@@ -16,6 +16,9 @@ export const RegistrationForm: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [isWaitlist, setIsWaitlist] = useState(false);
   const [registrationCount, setRegistrationCount] = useState(0);
+  const [step1Valid, setStep1Valid] = useState(false);
+  const [step2Valid, setStep2Valid] = useState(false);
+
   const [formData, setFormData] = useState({
     studentName: '',
     mobile: '',
@@ -48,42 +51,53 @@ export const RegistrationForm: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const isStep1Valid = formData.studentName && formData.mobile && formData.email && formData.class && formData.school && formData.gender && formData.whatsapp;
-  const isStep2Valid = formData.fatherName && formData.motherName && formData.fathermobile && formData.attendingParent;
-
   const handleNext = () => {
-    if (isStep1Valid) {
+    if (step1Valid) {
       setCurrentStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Final validation check
+    if (!step1Valid || !step2Valid) {
+      alert('Please fill in all required fields correctly before submitting.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       // Check current count before submission
       const currentCount = await getRegistrationCount();
       const isWaitlistRegistration = currentCount >= 100;
-      
+
       const result = await addRegistration({
         ...formData,
-        attendingParent: formData.attendingParent as 'Father' | 'Mother' | 'Both' | 'Others',
+        attendingParent: formData.attendingParent as 'Father' | 'Mother' | 'Others' | 'None',
         isWaitlist: isWaitlistRegistration,
         registrationId: ''
       });
-      
+
       if (result.success) {
         setIsWaitlist(isWaitlistRegistration);
         setSubmitted(true);
+        // Redirect after 5 seconds
         setTimeout(() => router.push('/'), 5000);
       } else {
         alert('Error submitting form. Please try again.');
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error('Submit error:', error);
       alert('Error submitting form. Please try again.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -93,12 +107,12 @@ export const RegistrationForm: React.FC = () => {
   }
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed py-8 px-4"
       style={{ backgroundImage: 'url(/bg.jpg)' }}
     >
       <div className="min-h-screen bg-black/40 backdrop-blur-sm absolute inset-0" />
-      
+
       <div className="max-w-3xl mx-auto relative z-10">
         {/* Registration Status Banner */}
         {registrationCount >= 100 && (
@@ -120,7 +134,7 @@ export const RegistrationForm: React.FC = () => {
           }`}>
             {currentStep > 1 ? <CheckCircle className="w-6 h-6" /> : '1'}
           </div>
-          <div className={`h-1 w-12 rounded-full ${currentStep >= 2 ? 'bg-indigo-600' : 'bg-white/50'}`} />
+          <div className={`h-1 w-12 rounded-full transition-all ${currentStep >= 2 ? 'bg-indigo-600' : 'bg-white/50'}`} />
           <div className={`flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all shadow-lg ${
             currentStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-white/90 text-gray-600'
           }`}>
@@ -140,8 +154,13 @@ export const RegistrationForm: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
               >
-                <StudentInfo formData={formData} onChange={handleChange} />
+                <StudentInfo
+                  formData={formData}
+                  onChange={handleChange}
+                  onValidationChange={setStep1Valid}
+                />
               </motion.div>
             )}
 
@@ -150,8 +169,13 @@ export const RegistrationForm: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
               >
-                <ParentInfo formData={formData} onChange={handleChange} />
+                <ParentInfo
+                  formData={formData}
+                  onChange={handleChange}
+                  onValidationChange={setStep2Valid}
+                />
               </motion.div>
             )}
 
@@ -160,7 +184,7 @@ export const RegistrationForm: React.FC = () => {
               {currentStep === 2 && (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(1)}
+                  onClick={handleBack}
                   className="flex-1 py-3 px-6 border-2 border-indigo-600 text-indigo-600 font-bold rounded-lg hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -172,7 +196,7 @@ export const RegistrationForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={!isStep1Valid}
+                  disabled={!step1Valid}
                   className="flex-1 py-3 px-6 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                 >
                   Next
@@ -182,7 +206,7 @@ export const RegistrationForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={isSubmitting || !isStep2Valid}
+                  disabled={isSubmitting || !step2Valid}
                   className="flex-1 py-3 px-6 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
@@ -199,6 +223,30 @@ export const RegistrationForm: React.FC = () => {
                 </button>
               )}
             </div>
+
+            {/* Validation Status Message */}
+            {currentStep === 1 && !step1Valid && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200"
+              >
+                <p className="text-sm text-amber-700 text-center">
+                  ⚠️ Please fill in all fields correctly to proceed to the next step
+                </p>
+              </motion.div>
+            )}
+            {currentStep === 2 && !step2Valid && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200"
+              >
+                <p className="text-sm text-amber-700 text-center">
+                  ⚠️ Please fill in all fields correctly to submit the form
+                </p>
+              </motion.div>
+            )}
           </div>
         </motion.div>
 
