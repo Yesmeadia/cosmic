@@ -43,3 +43,21 @@ export interface Stats {
   };
   waitlistCount?: number;
 }
+
+export interface AttendanceRecord {
+  id?: string;
+  studentId: string;
+  studentName: string;
+  class: string;
+  school: string;
+  email: string;
+  date: string;
+  timestamp: Date;
+  markedBy?: string;
+}
+
+export interface AttendanceStats {
+  total: number;
+  byClass: Record<string, number>;
+  bySchool: Record<string, number>;
+}

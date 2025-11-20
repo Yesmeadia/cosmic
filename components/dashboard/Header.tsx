@@ -1,7 +1,8 @@
 'use client';
 import React from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, QrCode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { signOut } from '@/lib/auth';
 
 export const Header: React.FC = () => {
@@ -29,6 +30,15 @@ export const Header: React.FC = () => {
               Cosmic Dashboard
             </h1>
           </div>
+
+          {/* Attendance Link */}
+          <Link 
+            href="/attendance"
+            className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
+            <QrCode className="w-5 h-5" />
+            Attendance
+          </Link>
 
           {/* Logout Button - Redesigned */}
           <button
