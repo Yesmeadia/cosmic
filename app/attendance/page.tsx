@@ -53,7 +53,7 @@ export default function AttendancePage() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Memoized refs for performance
-  const scanTimeoutRef = useRef<NodeJS.Timeout>();
+  const scanTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const processedStudentsRef = useRef<Set<string>>(new Set());
 
   // Initialize on mount
@@ -470,7 +470,7 @@ export default function AttendancePage() {
         )}
       </div>
       <footer className="text-center text-blue-900 text-bold py-6 mt-12">
-        &copy; {new Date().getFullYear()} YES INDIA FOUNDATION. All rights reserved.
+        &copy; {new Date().getFullYear()} YES INDIA FOUNDATION. All Rights Reserved.
       </footer>
     </div>
   );
