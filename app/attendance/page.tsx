@@ -10,6 +10,7 @@ import {
   getTodaysAttendance,
   getAttendanceStats,
   exportAttendanceToCSV,
+  AttendanceRecord as LibAttendanceRecord,
 } from '@/lib/attendance';
 import QRScanner from '@/components/attendance/QRCamera';
 import AttendanceHeader from '@/components/attendance/AttendanceHeader';
@@ -18,20 +19,8 @@ import ManualQRInput from '@/components/attendance/ManualInput';
 import ActionsSidebar from '@/components/attendance/ActionsSidebar';
 import AttendanceList from '@/components/attendance/AttendanceList';
 import ParentAccompaniment from '@/components/attendance/ParentAccompaniment';
-
-interface AttendanceRecord {
-  id?: string;
-  studentId: string;
-  studentName: string;
-  class: string;
-  school: string;
-  email: string;
-  date: string;
-  timestamp: Date;
-  attendingParent?: string;
-  parentVerified?: boolean;
-  program?: string;
-}
+ 
+type AttendanceRecord = LibAttendanceRecord;
 
 export default function AttendancePage() {
   const [isScanning, setIsScanning] = useState(false);
