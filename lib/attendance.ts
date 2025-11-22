@@ -157,7 +157,7 @@ export const getStudentByQRCode = async (qrCode: string): Promise<{ success: boo
 };
 
 // Get today's attendance records
-export const getTodaysAttendance = async () => {
+export const getTodaysAttendance = async (p0?: number) => {
   try {
     const today = new Date().toLocaleDateString();
     const attendanceRef = collection(db, 'attendance');

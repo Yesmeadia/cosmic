@@ -1,4 +1,4 @@
-// app/attendance/page.jsx
+// app/attendance/page.tsx
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -22,27 +22,60 @@ import ParentAccompaniment from '@/components/attendance/ParentAccompaniment';
  
 type AttendanceRecord = LibAttendanceRecord;
 
+interface ScanResult {
+  status: 'success' | 'warning' | 'error';
+  message: string;
+  student?: string;
+  class?: string;
+  parent?: string;
+  parentVerified?: boolean;
+  program?: string;
+}
+
+interface Stats {
+  total: number;
+  marked: number;
+  byClass: Record<string, number>;
+  byParent: Record<string, number>;
+}
+
+interface Student {
+  id: string;
+  studentName: string;
+  class: string;
+  school: string;
+  email: string;
+  mobile: string;
+  program?: string;
+}
+
+interface ParentData {
+  attendingParent: string;
+  parentVerified: boolean;
+  program: string;
+}
+
 export default function AttendancePage() {
   const [isScanning, setIsScanning] = useState(false);
   const [attendanceList, setAttendanceList] = useState<AttendanceRecord[]>([]);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<Stats>({
     total: 0,
     marked: 0,
     byClass: {},
     byParent: {},
   });
-  const [scanResult, setScanResult] = useState(null);
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [useManualInput, setUseManualInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showParentModal, setShowParentModal] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Memoized refs for performance
-  const scanTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const processedStudentsRef = useRef<Set<string>>(new Set());
 
   // Initialize on mount
@@ -55,7 +88,12 @@ export default function AttendancePage() {
       setCurrentTime(new Date());
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Load initial data with optimized parallel fetching
@@ -97,7 +135,11 @@ export default function AttendancePage() {
           status: 'warning',
           message: 'This student is already marked today',
         });
-        setTimeout(() => setScanResult(null), 3000);
+        
+        if (scanTimeoutRef.current) {
+          clearTimeout(scanTimeoutRef.current);
+        }
+        scanTimeoutRef.current = setTimeout(() => setScanResult(null), 3000);
         return;
       }
 
@@ -112,7 +154,11 @@ export default function AttendancePage() {
             message: 'Invalid QR code format',
           });
           setIsLoading(false);
-          setTimeout(() => setScanResult(null), 3000);
+          
+          if (scanTimeoutRef.current) {
+            clearTimeout(scanTimeoutRef.current);
+          }
+          scanTimeoutRef.current = setTimeout(() => setScanResult(null), 3000);
           return;
         }
 
@@ -124,14 +170,18 @@ export default function AttendancePage() {
             message: `Student not found: ${studentId}`,
           });
           setIsLoading(false);
-          setTimeout(() => setScanResult(null), 3000);
+          
+          if (scanTimeoutRef.current) {
+            clearTimeout(scanTimeoutRef.current);
+          }
+          scanTimeoutRef.current = setTimeout(() => setScanResult(null), 3000);
           return;
         }
 
         // Mark as processing
         processedStudentsRef.current.add(studentId);
 
-        setSelectedStudent(studentResult.student);
+        setSelectedStudent(studentResult.student as Student);
         setShowParentModal(true);
         setIsLoading(false);
       } catch (err) {
@@ -143,7 +193,11 @@ export default function AttendancePage() {
         });
         processedStudentsRef.current.delete(studentId);
         setIsLoading(false);
-        setTimeout(() => setScanResult(null), 3000);
+        
+        if (scanTimeoutRef.current) {
+          clearTimeout(scanTimeoutRef.current);
+        }
+        scanTimeoutRef.current = setTimeout(() => setScanResult(null), 3000);
       }
     },
     [isLoading, isInitialized]
@@ -151,7 +205,7 @@ export default function AttendancePage() {
 
   // Optimized parent confirmation
   const handleParentConfirm = useCallback(
-    async (parentData) => {
+    async (parentData: ParentData) => {
       if (!selectedStudent) return;
 
       setIsLoading(true);
@@ -172,17 +226,21 @@ export default function AttendancePage() {
         if (!markResult.success) {
           setScanResult({
             status: 'warning',
-            message: markResult.message,
+            message: markResult.message || 'Failed to mark attendance',
           });
           processedStudentsRef.current.delete(selectedStudent.id);
           setIsLoading(false);
-          setTimeout(() => setScanResult(null), 3000);
+          
+          if (scanTimeoutRef.current) {
+            clearTimeout(scanTimeoutRef.current);
+          }
+          scanTimeoutRef.current = setTimeout(() => setScanResult(null), 3000);
           return;
         }
 
         // Update local state
         const newRecord: AttendanceRecord = {
-          id: markResult.data?.id,
+          id: markResult.data?.id || `${selectedStudent.id}-${Date.now()}`,
           studentId: selectedStudent.id,
           studentName: selectedStudent.studentName,
           class: selectedStudent.class,
@@ -228,7 +286,11 @@ export default function AttendancePage() {
         });
 
         playWelcomeMessage(selectedStudent.studentName, parentData.program);
-        setTimeout(() => setScanResult(null), 5000);
+        
+        if (scanTimeoutRef.current) {
+          clearTimeout(scanTimeoutRef.current);
+        }
+        scanTimeoutRef.current = setTimeout(() => setScanResult(null), 5000);
       } catch (err) {
         console.error('Error marking attendance:', err);
         setError('Error marking attendance');
@@ -237,7 +299,11 @@ export default function AttendancePage() {
           status: 'error',
           message: 'Error marking attendance',
         });
-        setTimeout(() => setScanResult(null), 3000);
+        
+        if (scanTimeoutRef.current) {
+          clearTimeout(scanTimeoutRef.current);
+        }
+        scanTimeoutRef.current = setTimeout(() => setScanResult(null), 3000);
       } finally {
         setIsLoading(false);
         setShowParentModal(false);
@@ -256,33 +322,44 @@ export default function AttendancePage() {
     setIsLoading(false);
   }, [selectedStudent]);
 
-  // Play welcome message
-  const playWelcomeMessage = useCallback((studentName, program = 'Cosmic Confluence') => {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-
-    const message = new SpeechSynthesisUtterance();
-    message.text = `Welcome ${studentName} for the ${program} program`;
-    message.rate = 0.9;
-
-    // Get all available voices
-    const voices = window.speechSynthesis.getVoices();
-
-    // Try to find Indian English voices
-    const indianVoice =
-      voices.find(v => v.lang === 'en-IN') ||      // Native Indian English voice
-      voices.find(v => v.name.toLowerCase().includes('india')) || 
-      voices.find(v => v.name.toLowerCase().includes('indian')) ||
-      voices.find(v => v.lang.startsWith('en'));   // fallback to any English voice
-
-    if (indianVoice) {
-      message.voice = indianVoice;
+  // Play welcome message with proper voice loading
+  const playWelcomeMessage = useCallback((studentName: string, program = 'Cosmic Confluence') => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      return;
     }
 
-    window.speechSynthesis.speak(message);
-  }
-}, []);
+    window.speechSynthesis.cancel();
 
+    const speak = () => {
+      const message = new SpeechSynthesisUtterance();
+      message.text = `Welcome ${studentName} for the ${program} program`;
+      message.rate = 0.9;
+
+      // Get all available voices
+      const voices = window.speechSynthesis.getVoices();
+
+      // Try to find Indian English voices
+      const indianVoice =
+        voices.find(v => v.lang === 'en-IN') ||
+        voices.find(v => v.name.toLowerCase().includes('india')) || 
+        voices.find(v => v.name.toLowerCase().includes('indian')) ||
+        voices.find(v => v.lang.startsWith('en'));
+
+      if (indianVoice) {
+        message.voice = indianVoice;
+      }
+
+      window.speechSynthesis.speak(message);
+    };
+
+    // Wait for voices to load if needed
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      window.speechSynthesis.addEventListener('voiceschanged', speak, { once: true });
+    } else {
+      speak();
+    }
+  }, []);
 
   // Export attendance
   const handleExport = useCallback(async () => {
@@ -293,16 +370,19 @@ export default function AttendancePage() {
       const a = document.createElement('a');
       a.href = url;
       a.download = `attendance-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (err) {
+      console.error('Export error:', err);
       setError('Failed to export attendance');
     }
   }, []);
 
   // Reset attendance
   const handleReset = useCallback(() => {
-    if (confirm('Are you sure you want to reset all attendance for today?')) {
+    if (window.confirm('Are you sure you want to reset all attendance for today?')) {
       setAttendanceList([]);
       setStats({ total: 0, marked: 0, byClass: {}, byParent: {} });
       processedStudentsRef.current.clear();
@@ -334,6 +414,14 @@ export default function AttendancePage() {
           >
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <p>{error}</p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="ml-auto text-red-600 hover:text-red-800"
+              aria-label="Dismiss error"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </motion.div>
         )}
 
@@ -359,13 +447,14 @@ export default function AttendancePage() {
                 <>
                   <QRScanner onScan={handleScan} isScanning={isScanning} />
                   <button
+                    type="button"
                     onClick={() => setIsScanning(!isScanning)}
                     disabled={isLoading}
                     className={`mt-4 w-full px-4 py-3 rounded-lg font-medium transition-colors text-sm md:text-base ${
                       isScanning
                         ? 'bg-red-600 text-white hover:bg-red-700'
                         : 'bg-green-600 text-white hover:bg-green-700'
-                    } disabled:bg-gray-400`}
+                    } disabled:bg-gray-400 disabled:cursor-not-allowed`}
                   >
                     {isScanning ? 'Stop Scanning' : 'Start Scanning'}
                   </button>
@@ -377,12 +466,13 @@ export default function AttendancePage() {
               )}
 
               <button
+                type="button"
                 onClick={() => {
                   setIsScanning(false);
                   setUseManualInput(!useManualInput);
                 }}
                 disabled={isLoading}
-                className="mt-4 w-full px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition-colors disabled:text-gray-400 text-sm md:text-base"
+                className="mt-4 w-full px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition-colors disabled:text-gray-400 disabled:cursor-not-allowed text-sm md:text-base"
               >
                 {useManualInput ? 'Use Camera Scanner' : 'Use Manual Input'}
               </button>
@@ -420,11 +510,13 @@ export default function AttendancePage() {
                         </div>
                       </div>
                       <button
+                        type="button"
                         onClick={() =>
-                          playWelcomeMessage(scanResult.student, scanResult.program)
+                          playWelcomeMessage(scanResult.student || '', scanResult.program)
                         }
                         className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 transition-colors"
                         title="Play welcome message"
+                        aria-label="Play welcome message"
                       >
                         <Volume2 className="w-4 h-4" />
                       </button>
@@ -458,7 +550,7 @@ export default function AttendancePage() {
           />
         )}
       </div>
-      <footer className="text-center text-blue-900 text-bold py-6 mt-12">
+      <footer className="text-center text-blue-900 font-bold py-6 mt-12">
         &copy; {new Date().getFullYear()} YES INDIA FOUNDATION. All Rights Reserved.
       </footer>
     </div>

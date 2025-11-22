@@ -1,4 +1,4 @@
-// components/attendance/ParentAccompaniment.jsx
+// components/attendance/ParentAccompaniment.tsx
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -10,7 +10,35 @@ import {
   X,
 } from 'lucide-react';
 
-const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
+interface Student {
+  id: string;
+  studentName: string;
+  class: string;
+  school: string;
+  mobile: string;
+  program?: string;
+  attendingParent?: string;
+}
+
+interface ParentData {
+  attendingParent: string;
+  parentVerified: boolean;
+  program: string;
+}
+
+interface ParentAccompanimentProps {
+  student: Student;
+  onConfirm: (data: ParentData) => void;
+  onCancel: () => void;
+  isLoading: boolean;
+}
+
+const ParentAccompaniment: React.FC<ParentAccompanimentProps> = ({ 
+  student, 
+  onConfirm, 
+  onCancel, 
+  isLoading 
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedParent, setSelectedParent] = useState('');
   const [isParentVerified, setIsParentVerified] = useState(false);
@@ -29,10 +57,13 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
   );
 
   useEffect(() => {
-    setIsMobile(window.innerWidth < 768);
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   useEffect(() => {
@@ -46,7 +77,7 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
   const handleConfirm = useCallback(() => {
     let finalParentType = selectedParent;
     if (selectedParent === 'Other' && customParent.trim()) {
-      finalParentType = customParent;
+      finalParentType = customParent.trim();
     }
     onConfirm({
       attendingParent: finalParentType,
@@ -54,6 +85,12 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
       program: student?.program || 'Cosmic Confluence',
     });
   }, [selectedParent, customParent, isParentVerified, student, onConfirm]);
+
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && !isLoading) {
+      onCancel();
+    }
+  }, [isLoading, onCancel]);
 
   const Step1Verification = useCallback(
     () => (
@@ -97,14 +134,18 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
           <button
+            type="button"
             onClick={onCancel}
-            className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg font-semibold hover:bg-gray-50 transition-all duration-200"
+            disabled={isLoading}
+            className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg font-semibold hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={() => setCurrentStep(2)}
-            className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow flex items-center justify-center gap-1"
+            disabled={isLoading}
+            className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
             <ChevronRight className="w-3 h-3" />
@@ -112,7 +153,7 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
         </div>
       </motion.div>
     ),
-    [student, onCancel]
+    [student, onCancel, isLoading]
   );
 
   const Step2Accompaniment = useCallback(
@@ -128,16 +169,18 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
           {parentOptions.map((option) => (
             <motion.button
               key={option.key}
+              type="button"
               onClick={() => setSelectedParent(option.key)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              disabled={isLoading}
               className={`relative p-3 rounded-lg transition-all duration-200 overflow-hidden ${
                 selectedParent === option.key
                   ? `bg-gradient-to-br ${option.color} shadow scale-105`
                   : 'bg-white border border-gray-200 hover:border-gray-300'
-              }`}
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              <div className={`relative z-10 text-center`}>
+              <div className="relative z-10 text-center">
                 <div
                   className={`text-sm font-bold ${
                     selectedParent === option.key
@@ -171,16 +214,18 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
               exit={{ opacity: 0, height: 0 }}
               className="bg-orange-50 border border-orange-200 rounded-lg p-3"
             >
-              <label className="block text-xs font-semibold text-gray-900 mb-2">
+              <label htmlFor="customParent" className="block text-xs font-semibold text-gray-900 mb-2">
                 Specify relationship:
               </label>
               <input
+                id="customParent"
                 type="text"
                 value={customParent}
                 onChange={(e) => setCustomParent(e.target.value)}
                 placeholder="e.g., Grandfather, Aunt, Family Friend"
                 autoFocus
-                className="w-full px-3 py-2 border border-orange-300 rounded-md focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition-all text-sm"
+                disabled={isLoading}
+                className="w-full px-3 py-2 border border-orange-300 rounded-md focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </motion.div>
           )}
@@ -200,7 +245,8 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
                   type="checkbox"
                   checked={isParentVerified}
                   onChange={(e) => setIsParentVerified(e.target.checked)}
-                  className="w-4 h-4 text-yellow-600 rounded focus:ring-1 focus:ring-yellow-500 mt-0.5 flex-shrink-0 cursor-pointer"
+                  disabled={isLoading}
+                  className="w-4 h-4 text-yellow-600 rounded focus:ring-1 focus:ring-yellow-500 mt-0.5 flex-shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <div className="flex-1 min-w-0">
                   <span className="block font-bold text-yellow-900 text-xs mb-1">
@@ -218,6 +264,7 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
           <button
+            type="button"
             onClick={() => setCurrentStep(1)}
             disabled={isLoading}
             className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg font-semibold hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
@@ -226,6 +273,7 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
             Back
           </button>
           <button
+            type="button"
             onClick={handleConfirm}
             disabled={
               isLoading || (selectedParent === 'Other' && !customParent.trim())
@@ -263,13 +311,18 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      onClick={handleBackdropClick}
       className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 md:p-4 z-50 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         className="bg-white rounded-xl md:rounded-2xl shadow-xl w-full max-w-sm overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Compact Header with Background Image */}
         <div 
@@ -279,7 +332,7 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white text-center px-4">
-            <h1 className="text-lg md:text-xl font-bold drop-shadow">
+            <h1 id="modal-title" className="text-lg md:text-xl font-bold drop-shadow">
               {currentStep === 1 ? 'STUDENT VERIFICATION' : 'ACCOMPANIMENT'}
             </h1>
             <p className="text-xs text-white/90 mt-0.5 font-medium">
@@ -292,7 +345,6 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
             {[1, 2].map((step) => (
               <motion.div
                 key={step}
-                layoutId={`step-${step}`}
                 className={`h-1 rounded-full transition-all duration-300 ${
                   currentStep >= step ? 'bg-white w-5' : 'bg-white/40 w-1'
                 }`}
@@ -302,8 +354,11 @@ const ParentAccompaniment = ({ student, onConfirm, onCancel, isLoading }) => {
 
           {/* Close Button */}
           <button
+            type="button"
             onClick={onCancel}
-            className="absolute top-2 right-2 text-white hover:bg-white/20 p-1 rounded-full transition-all z-20"
+            disabled={isLoading}
+            className="absolute top-2 right-2 text-white hover:bg-white/20 p-1 rounded-full transition-all z-20 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Close modal"
           >
             <X className="w-4 h-4" />
           </button>
