@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import AttendanceHeader from './AttendanceHeader';
@@ -89,6 +89,21 @@ const AttendanceSection: React.FC = () => {
   useEffect(() => {
     loadTodaysAttendance();
   }, []);
+
+  // Calculate totalParticipation
+  const totalParticipation = useMemo(() => {
+    return attendanceList.reduce((total, record) => {
+      let count = 1;
+      if (record.attendingParent !== 'None') {
+        if (record.attendingParent === 'Both') {
+          count += 2;
+        } else {
+          count += 1;
+        }
+      }
+      return total + count;
+    }, 0);
+  }, [attendanceList]);
 
   const loadTodaysAttendance = async () => {
     try {
@@ -317,10 +332,12 @@ const AttendanceSection: React.FC = () => {
           </motion.div>
         )}
 
+        {/* Updated StatsCards with totalParticipation prop */}
         <StatsCards 
           stats={stats} 
           currentTime={currentTime} 
-          isClient={isClient} 
+          isClient={isClient}
+          totalParticipation={totalParticipation}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
