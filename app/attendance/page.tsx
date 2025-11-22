@@ -157,7 +157,7 @@ export default function AttendancePage() {
       }
 
       if (statsResult.success) {
-        const statsData = statsResult.stats || statsResult;
+        const statsData = statsResult;
         
         // Ensure all numeric values are valid numbers, not NaN
         setStats({
