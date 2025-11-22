@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { QrCode, AlertCircle, Check, Volume2, X } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 import {
   getStudentByQRCode,
   markAttendance,
@@ -12,14 +13,6 @@ import {
   exportAttendanceToCSV,
 } from '@/lib/attendance';
 import QRScanner from '@/components/attendance/QRCamera';
-import {
-  Timestamp,
-  collection,
-  addDoc,
-  query,
-  where,
-  getDocs,
-} from 'firebase/firestore';
 import AttendanceHeader from '@/components/attendance/AttendanceHeader';
 import StatsCards from '@/components/attendance/StatsCards';
 import ManualQRInput from '@/components/attendance/ManualInput';
@@ -35,11 +28,10 @@ interface AttendanceRecord {
   school: string;
   email: string;
   date: string;
-  timestamp: Date; // Changed to Date for consistency with local state
+  timestamp: Date;
   attendingParent: string;
   parentVerified: boolean;
   program: string;
-  
 }
 
 interface Stats {
@@ -64,7 +56,9 @@ interface Student {
   studentName: string;
   class: string;
   school: string;
-  email: string;
+  email?: string;
+  mobile?: string;
+  program?: string;
 }
 
 interface ParentData {
@@ -72,6 +66,28 @@ interface ParentData {
   parentVerified: boolean;
   program: string;
 }
+
+// Helper function to convert Firestore Timestamp to Date
+const convertTimestampToDate = (timestamp: unknown): Date => {
+  if (!timestamp) return new Date();
+  
+  // Check if it's a Firestore Timestamp
+  if (typeof timestamp === 'object' && timestamp !== null && 'toDate' in timestamp) {
+    return (timestamp as Timestamp).toDate();
+  }
+  
+  // Check if it's already a Date
+  if (timestamp instanceof Date) {
+    return timestamp;
+  }
+  
+  // Try to parse as string or number
+  try {
+    return new Date(timestamp as string | number);
+  } catch {
+    return new Date();
+  }
+};
 
 export default function AttendancePage() {
   const [isScanning, setIsScanning] = useState(false);
@@ -112,6 +128,7 @@ export default function AttendancePage() {
         clearTimeout(scanTimeoutRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load initial data with optimized parallel fetching
@@ -123,19 +140,16 @@ export default function AttendancePage() {
       ]);
 
       if (attendanceResult.success && attendanceResult.records) {
-        const records = attendanceResult.records.map((r) => ({
+        const records = attendanceResult.records.map((r: any) => ({
           ...r,
           id: r.id || `${r.studentId}-${Date.now()}`,
-          // Ensure timestamp is a Date object
-          timestamp: r.timestamp instanceof Timestamp
-            ? r.timestamp.toDate()
-            : r.timestamp instanceof Date
-            ? r.timestamp
-            : new Date(r.timestamp), // Fallback for string/other formats
-
+          timestamp: convertTimestampToDate(r.timestamp),
+          email: r.email || '',
+          date: r.date || new Date().toLocaleDateString(),
         })) as AttendanceRecord[];
         
         setAttendanceList(records);
+        
         // Build processed set for duplicate prevention
         processedStudentsRef.current = new Set(
           records.map((r: AttendanceRecord) => r.studentId)
@@ -143,13 +157,13 @@ export default function AttendancePage() {
       }
 
       if (statsResult.success) {
-        const statsData = statsResult;
+        const statsData = statsResult.stats || statsResult;
         
         // Ensure all numeric values are valid numbers, not NaN
         setStats({
           total: Number(statsData.total) || 0,
- marked: Number(statsData.marked) || 0,
-          byClass: statsData.byClass || {}, 
+          marked: Number(statsData.marked) || 0,
+          byClass: statsData.byClass || {},
           byParent: statsData.byParent || {},
         });
       }
@@ -167,7 +181,7 @@ export default function AttendancePage() {
     async (qrCode: string) => {
       if (isLoading || !isInitialized) return;
 
-      // Prevent duplicate scans within 2 seconds
+      // Prevent duplicate scans
       const studentId = qrCode.substring(0, 7).toUpperCase();
       if (processedStudentsRef.current.has(studentId)) {
         setScanResult({
@@ -402,8 +416,8 @@ export default function AttendancePage() {
   // Export attendance
   const handleExport = useCallback(async () => {
     try {
-      const csv = await exportAttendanceToCSV() as unknown as string; // Cast to string as exportAttendanceToCSV returns a string
-      const blob = new Blob([csv], { type: 'text/csv' });
+      const csv = await exportAttendanceToCSV();
+      const blob = new Blob([csv as string], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
