@@ -1,16 +1,15 @@
-// app/attendance/page.tsx
+// app/attendance/page.jsx
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { QrCode, AlertCircle, Check, Volume2 } from 'lucide-react';
+import { QrCode, AlertCircle, Check, Volume2, X } from 'lucide-react';
 import {
   getStudentByQRCode,
   markAttendance,
   getTodaysAttendance,
   getAttendanceStats,
   exportAttendanceToCSV,
-  AttendanceRecord as LibAttendanceRecord,
 } from '@/lib/attendance';
 import QRScanner from '@/components/attendance/QRCamera';
 import AttendanceHeader from '@/components/attendance/AttendanceHeader';
@@ -19,64 +18,29 @@ import ManualQRInput from '@/components/attendance/ManualInput';
 import ActionsSidebar from '@/components/attendance/ActionsSidebar';
 import AttendanceList from '@/components/attendance/AttendanceList';
 import ParentAccompaniment from '@/components/attendance/ParentAccompaniment';
- 
-type AttendanceRecord = LibAttendanceRecord;
-
-interface ScanResult {
-  status: 'success' | 'warning' | 'error';
-  message: string;
-  student?: string;
-  class?: string;
-  parent?: string;
-  parentVerified?: boolean;
-  program?: string;
-}
-
-interface Stats {
-  total: number;
-  marked: number;
-  byClass: Record<string, number>;
-  byParent: Record<string, number>;
-}
-
-interface Student {
-  id: string;
-  studentName: string;
-  class: string;
-  school: string;
-  email: string;
-  mobile: string;
-  program?: string;
-}
-
-interface ParentData {
-  attendingParent: string;
-  parentVerified: boolean;
-  program: string;
-}
 
 export default function AttendancePage() {
   const [isScanning, setIsScanning] = useState(false);
-  const [attendanceList, setAttendanceList] = useState<AttendanceRecord[]>([]);
-  const [stats, setStats] = useState<Stats>({
+  const [attendanceList, setAttendanceList] = useState([]);
+  const [stats, setStats] = useState({
     total: 0,
     marked: 0,
     byClass: {},
     byParent: {},
   });
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [scanResult, setScanResult] = useState(null);
   const [useManualInput, setUseManualInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [error, setError] = useState(null);
+  const [currentTime, setCurrentTime] = useState(null);
   const [isClient, setIsClient] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [showParentModal, setShowParentModal] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Memoized refs for performance
-  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const processedStudentsRef = useRef<Set<string>>(new Set());
+  const scanTimeoutRef = useRef(null);
+  const processedStudentsRef = useRef(new Set());
 
   // Initialize on mount
   useEffect(() => {
@@ -112,8 +76,10 @@ export default function AttendancePage() {
         );
       }
 
-      if (statsResult.success && statsResult.stats) {
-        setStats(statsResult.stats);
+      if (statsResult.success) {
+        // Handle both possible response structures
+        const statsData = statsResult.stats || statsResult;
+        setStats(statsData);
       }
 
       setIsInitialized(true);
@@ -125,7 +91,7 @@ export default function AttendancePage() {
 
   // Memoized scan handler
   const handleScan = useCallback(
-    async (qrCode: string) => {
+    async (qrCode) => {
       if (isLoading || !isInitialized) return;
 
       // Prevent duplicate scans within 2 seconds
@@ -181,7 +147,7 @@ export default function AttendancePage() {
         // Mark as processing
         processedStudentsRef.current.add(studentId);
 
-        setSelectedStudent(studentResult.student as Student);
+        setSelectedStudent(studentResult.student);
         setShowParentModal(true);
         setIsLoading(false);
       } catch (err) {
@@ -205,7 +171,7 @@ export default function AttendancePage() {
 
   // Optimized parent confirmation
   const handleParentConfirm = useCallback(
-    async (parentData: ParentData) => {
+    async (parentData) => {
       if (!selectedStudent) return;
 
       setIsLoading(true);
@@ -239,7 +205,7 @@ export default function AttendancePage() {
         }
 
         // Update local state
-        const newRecord: AttendanceRecord = {
+        const newRecord = {
           id: markResult.data?.id || `${selectedStudent.id}-${Date.now()}`,
           studentId: selectedStudent.id,
           studentName: selectedStudent.studentName,
@@ -323,7 +289,7 @@ export default function AttendancePage() {
   }, [selectedStudent]);
 
   // Play welcome message with proper voice loading
-  const playWelcomeMessage = useCallback((studentName: string, program = 'Cosmic Confluence') => {
+  const playWelcomeMessage = useCallback((studentName, program = 'Cosmic Confluence') => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       return;
     }
