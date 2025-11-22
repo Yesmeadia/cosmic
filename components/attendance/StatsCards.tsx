@@ -1,20 +1,45 @@
+// ============================================================
+// components/attendance/StatsCards.tsx (Corrected)
 'use client';
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Calendar, Users, Clock, UserCheck } from 'lucide-react';
+import { Check, Calendar, Users, Clock, UserCheck, LucideIcon } from 'lucide-react';
 
-const StatsCards = ({ stats, currentTime, isClient }) => {
+interface Stats {
+  total: number;
+  marked: number;
+  byClass: Record<string, number>;
+  byParent: Record<string, number>;
+}
+
+interface StatsCardsProps {
+  stats: Stats;
+  currentTime: Date | null;
+  isClient: boolean;
+}
+
+interface StatCard {
+  title: string;
+  value: string | number;
+  icon: LucideIcon;
+  color: string;
+  bgColor: string;
+  subtitle?: string;
+  isDate?: boolean;
+  isTime?: boolean;
+}
+
+const StatsCards: React.FC<StatsCardsProps> = ({ stats, currentTime, isClient }) => {
   // Memoized calculations
   const { parentCount, soloCount, percentage, topClass } = useMemo(() => {
-    const solo = stats.byParent ? stats.byParent['None'] || 0 : 0;
-    const withParent = stats.marked - solo;
+    const solo = stats.byParent ? Number(stats.byParent['None']) || 0 : 0;
+    const withParent = Number(stats.marked) - solo;
     const pct =
       stats.marked > 0 ? Math.round((withParent / stats.marked) * 100) : 0;
     const top =
-      Object.entries(stats.byClass || {}).sort(([, a], [, b]) => b - a)[0]?.[0] ||
+      Object.entries(stats.byClass || {}).sort(([, a], [, b]) => Number(b) - Number(a))[0]?.[0] ||
       'N/A';
-
     return {
       parentCount: withParent,
       soloCount: solo,
@@ -23,17 +48,17 @@ const StatsCards = ({ stats, currentTime, isClient }) => {
     };
   }, [stats]);
 
-  const cards = [
+  const cards: StatCard[] = useMemo(() => [ // Renamed 'motion' to 'cards'
     {
       title: 'Total Marked',
-      value: stats.marked,
+      value: stats.marked || 0,
       icon: Check,
       color: 'from-blue-500 to-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
       title: 'With Parents',
-      value: parentCount,
+      value: parentCount || 0,
       icon: UserCheck,
       color: 'from-purple-500 to-purple-600',
       bgColor: 'bg-purple-50',
@@ -62,7 +87,7 @@ const StatsCards = ({ stats, currentTime, isClient }) => {
       color: 'from-green-500 to-green-600',
       bgColor: 'bg-green-50',
     },
-  ];
+  ], [stats.marked, parentCount, percentage, topClass, isClient, currentTime]);
 
   return (
     <motion.div
@@ -104,4 +129,3 @@ const StatsCards = ({ stats, currentTime, isClient }) => {
 };
 
 export default React.memo(StatsCards);
-
