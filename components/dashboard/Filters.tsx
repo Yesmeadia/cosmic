@@ -24,6 +24,7 @@ export const Filters: React.FC<FiltersProps> = ({ filter, onFilterChange, data }
           type="text"
           placeholder="Search by name, email, school..."
           value={filter.search}
+          aria-label="Search registrations"
           onChange={(e) => onFilterChange({ ...filter, search: e.target.value })}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         />
@@ -31,6 +32,7 @@ export const Filters: React.FC<FiltersProps> = ({ filter, onFilterChange, data }
         <select
           value={filter.class}
           onChange={(e) => onFilterChange({ ...filter, class: e.target.value })}
+          aria-label="Filter by class"
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         >
           <option value="">All Classes</option>
@@ -43,6 +45,7 @@ export const Filters: React.FC<FiltersProps> = ({ filter, onFilterChange, data }
         <select
           value={filter.attendingParent}
           onChange={(e) => onFilterChange({ ...filter, attendingParent: e.target.value })}
+          aria-label="Filter by accompanying parent"
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         >
           <option value="">All Parents</option>
@@ -55,6 +58,7 @@ export const Filters: React.FC<FiltersProps> = ({ filter, onFilterChange, data }
         <select
           value={filter.paymentStatus}
           onChange={(e) => onFilterChange({ ...filter, paymentStatus: e.target.value })}
+          aria-label="Filter by payment status"
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         >
           <option value="">All Payment Status</option>

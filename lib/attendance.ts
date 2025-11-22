@@ -1,18 +1,32 @@
-// lib/attendance.ts
-import { db } from '@/lib/firebase';
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  getDocs,
-  serverTimestamp,
+// lib/firebase/attendance.ts
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  deleteDoc,
+  doc,
   Timestamp,
-  Query,
+  getDoc 
 } from 'firebase/firestore';
+import { db } from './firebase';
 
+// Student interface
+export interface Student {
+  id: string;
+  studentName: string;
+  class: string;
+  school: string;
+  email?: string;
+  mobile?: string;
+  program?: string;
+  registrationId?: string;
+}
+
+// Attendance record interface
 export interface AttendanceRecord {
-  id?: string;
+  id: string;
   studentId: string;
   studentName: string;
   class: string;
@@ -20,286 +34,410 @@ export interface AttendanceRecord {
   email: string;
   date: string;
   timestamp: Timestamp;
-  markedBy?: string;
-  attendingParent?: string;
-  parentVerified?: boolean;
-  program?: string;
-  mobile?: string;
+  attendingParent: string;
+  parentVerified: boolean;
+  program: string;
+  registrationId: string;
 }
 
-export interface Student {
-  id: string;
+/**
+ * Get student by registration ID (exact match)
+ */
+export const getStudentByRegistrationId = async (registrationId: string): Promise<{
+  success: boolean;
+  student?: Student;
+  message?: string;
+}> => {
+  try {
+    const docRef = doc(db, 'registrations', registrationId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      return {
+        success: false,
+        message: 'Student registration not found'
+      };
+    }
+    
+    const data = docSnap.data();
+    const student: Student = {
+      id: docSnap.id,
+      studentName: data.studentName || data.name || data.fullName || data.student_name || 'Unknown',
+      class: data.class || data.grade || data.standard || data.student_class || 'N/A',
+      school: data.school || data.schoolName || data.student_school || 'N/A',
+      email: data.email || data.studentEmail || data.student_email || '',
+      mobile: data.mobile || data.phone || data.contactNumber || data.student_mobile || '',
+      program: data.program || data.event || data.student_program || 'Cosmic Confluence',
+      registrationId: docSnap.id
+    };
+    
+    return {
+      success: true,
+      student
+    };
+  } catch (error) {
+    console.error('Error fetching student by registration ID:', error);
+    return {
+      success: false,
+      message: 'Error fetching student data'
+    };
+  }
+};
+
+/**
+ * Get all students from registrations collection for partial matching
+ */
+export const getAllRegisteredStudents = async (): Promise<{
+  success: boolean;
+  students?: Student[];
+  message?: string;
+}> => {
+  try {
+    const registrationsRef = collection(db, 'registrations');
+    const querySnapshot = await getDocs(registrationsRef);
+    
+    const students: Student[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const student: Student = {
+        id: doc.id,
+        studentName: data.studentName || data.name || data.fullName || data.student_name || 'Unknown',
+        class: data.class || data.grade || data.standard || data.student_class || 'N/A',
+        school: data.school || data.schoolName || data.student_school || 'N/A',
+        email: data.email || data.studentEmail || data.student_email || '',
+        mobile: data.mobile || data.phone || data.contactNumber || data.student_mobile || '',
+        program: data.program || data.event || data.student_program || 'Cosmic Confluence',
+        registrationId: doc.id
+      };
+      
+      students.push(student);
+    });
+
+    console.log(`Fetched ${students.length} students from registrations`);
+    
+    return {
+      success: true,
+      students
+    };
+  } catch (error) {
+    console.error('Error fetching all students:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch student data from registrations'
+    };
+  }
+};
+
+/**
+ * Get student by QR code (first 7 digits of registration ID)
+ */
+export const getStudentByQRCode = async (qrCode: string): Promise<{
+  success: boolean;
+  student?: Student;
+  message?: string;
+  exactMatch?: boolean;
+}> => {
+  try {
+    // Clean the input - take only first 7 alphanumeric characters
+    const cleanQRCode = qrCode.replace(/[^a-zA-Z0-9]/g, '').substring(0, 7);
+    
+    if (cleanQRCode.length < 3) {
+      return {
+        success: false,
+        message: 'Please enter at least 3 characters for student ID'
+      };
+    }
+
+    console.log(`Searching for student with ID starting with: ${cleanQRCode}`);
+
+    // First, try exact match with the full ID
+    const exactMatchResult = await getStudentByRegistrationId(cleanQRCode);
+    if (exactMatchResult.success && exactMatchResult.student) {
+      console.log(`Exact match found: ${exactMatchResult.student.studentName}`);
+      return {
+        success: true,
+        student: exactMatchResult.student,
+        exactMatch: true
+      };
+    }
+
+    // If exact match fails, search for documents where ID starts with these 7 digits
+    const allStudentsResult = await getAllRegisteredStudents();
+    
+    if (!allStudentsResult.success || !allStudentsResult.students) {
+      return {
+        success: false,
+        message: 'Failed to fetch student data from registration database'
+      };
+    }
+
+    // Find students whose registration ID starts with the first 7 digits
+    const matchingStudents = allStudentsResult.students.filter(student =>
+      student.id.toLowerCase().startsWith(cleanQRCode.toLowerCase())
+    );
+
+    console.log(`Found ${matchingStudents.length} partial matches for: ${cleanQRCode}`);
+
+    if (matchingStudents.length === 0) {
+      return {
+        success: false,
+        message: `No registered student found with ID starting with: ${cleanQRCode}`
+      };
+    }
+
+    if (matchingStudents.length > 1) {
+      console.warn(`Multiple students found with ID starting with: ${cleanQRCode}`);
+      // Return the first match, but log the ambiguity
+      const selectedStudent = matchingStudents[0];
+      return {
+        success: true,
+        student: selectedStudent,
+        exactMatch: false,
+        message: `Multiple matches found. Using: ${selectedStudent.studentName}`
+      };
+    }
+
+    // Single match found
+    return {
+      success: true,
+      student: matchingStudents[0],
+      exactMatch: false
+    };
+    
+  } catch (error) {
+    console.error('Error getting student by QR code:', error);
+    return {
+      success: false,
+      message: 'Error fetching student data from registration database'
+    };
+  }
+};
+
+/**
+ * Search students by name, class, or school in registrations
+ * Main export for searching - replaces searchStudentsInRegistrations
+ */
+export const searchStudents = async (searchTerm: string): Promise<{
+  success: boolean;
+  students?: Student[];
+  message?: string;
+}> => {
+  try {
+    const allStudentsResult = await getAllRegisteredStudents();
+    
+    if (!allStudentsResult.success || !allStudentsResult.students) {
+      return {
+        success: false,
+        message: 'Failed to fetch student data from registrations'
+      };
+    }
+
+    const searchLower = searchTerm.toLowerCase();
+    const matchingStudents = allStudentsResult.students.filter(student =>
+      student.studentName.toLowerCase().includes(searchLower) ||
+      student.class.toLowerCase().includes(searchLower) ||
+      student.school.toLowerCase().includes(searchLower) ||
+      student.id.toLowerCase().includes(searchLower)
+    );
+
+    return {
+      success: true,
+      students: matchingStudents
+    };
+  } catch (error) {
+    console.error('Error searching students:', error);
+    return {
+      success: false,
+      message: 'Error searching students in registration database'
+    };
+  }
+};
+
+/**
+ * Legacy export - alias for searchStudents
+ * @deprecated Use searchStudents instead
+ */
+export const searchStudentsInRegistrations = searchStudents;
+
+/**
+ * Mark attendance with registration validation
+ */
+export const markAttendance = async (studentId: string, data: {
+  studentId: string;
   studentName: string;
   class: string;
   school: string;
   email: string;
-  phone?: string;
-  parentName?: string;
-  attendingParent?: string;
-  program?: string;
-  mobile?: string;
-}
-
-// Mark attendance for a student with parent info
-export const markAttendance = async (
-  studentId: string,
-  studentData: Omit<AttendanceRecord, 'id' | 'timestamp'>
-): Promise<{ success: boolean; message: string; data?: AttendanceRecord }> => {
+  date: string;
+  attendingParent: string;
+  parentVerified: boolean;
+  program: string;
+}): Promise<{
+  success: boolean;
+  id?: string;
+  message?: string;
+}> => {
   try {
-    // Check if already marked today
-    const today = new Date().toLocaleDateString();
-    const attendanceRef = collection(db, 'attendance');
+    // First validate that the student exists in registrations
+    const validationResult = await getStudentByQRCode(studentId);
     
-    const q = query(
-      attendanceRef,
-      where('studentId', '==', studentId),
-      where('date', '==', today)
-    );
-
-    const existingDocs = await getDocs(q);
-
-    if (!existingDocs.empty) {
+    if (!validationResult.success || !validationResult.student) {
       return {
         success: false,
-        message: 'Student already marked for today'
+        message: validationResult.message || 'Student not found in registration database'
       };
     }
 
-    // Add new attendance record
-    const newRecord = await addDoc(attendanceRef, {
-      ...studentData,
-      timestamp: serverTimestamp(),
-      date: today,
+    const attendanceRef = collection(db, 'attendance');
+    const docRef = await addDoc(attendanceRef, {
+      ...data,
+      registrationId: validationResult.student.registrationId || studentId,
+      timestamp: Timestamp.now()
     });
+
+    console.log(`Attendance marked for ${data.studentName} (Registration ID: ${validationResult.student.registrationId})`);
 
     return {
       success: true,
-      message: 'Attendance marked successfully',
-      data: {
-        id: newRecord.id,
-        ...studentData,
-        timestamp: Timestamp.now(),
-      }
+      id: docRef.id
     };
   } catch (error) {
     console.error('Error marking attendance:', error);
     return {
       success: false,
-      message: 'Error marking attendance. Please try again.'
+      message: 'Failed to mark attendance'
     };
   }
 };
 
-// Get student by QR code (first 7 digits of ID in CAPITAL letters)
-export const getStudentByQRCode = async (qrCode: string): Promise<{ success: boolean; student?: Student }> => {
+/**
+ * Get today's attendance records
+ */
+export const getTodaysAttendance = async (): Promise<{
+  success: boolean;
+  records?: AttendanceRecord[];
+  count?: number;
+  message?: string;
+}> => {
   try {
-    console.log('🔍 Searching for student with QR code:', qrCode);
-    
-    // Convert QR code to uppercase and take first 7 characters
-    const searchId = qrCode.toUpperCase().substring(0, 7);
-    console.log('🔍 Searching with ID:', searchId);
-    
-    const registrationsRef = collection(db, 'registrations');
-    
-    // Get all documents to search through them
-    const querySnapshot = await getDocs(registrationsRef);
-    
-    console.log('📊 Total documents in registrations:', querySnapshot.size);
-    
-    // Search for document ID that starts with the first 7 uppercase digits
-    const matchingDoc = querySnapshot.docs.find(doc => {
-      const docId = doc.id.toUpperCase();
-      console.log('📄 Checking document ID:', docId, 'against:', searchId);
-      
-      // Check if document ID starts with the search ID
-      return docId.startsWith(searchId);
-    });
-
-    if (matchingDoc) {
-      const studentData = matchingDoc.data();
-      console.log('✅ Found matching student data:', studentData);
-      
-      // Map the student data with proper field fallbacks
-      const student: Student = {
-        id: matchingDoc.id, // Use the full Firebase document ID
-        studentName: studentData.studentName || studentData.name || studentData.fullName || 'Unknown Student',
-        class: studentData.class || studentData.grade || studentData.standard || studentData.course || 'Unknown Class',
-        school: studentData.school || studentData.institution || studentData.college || studentData.university || 'Unknown School',
-        email: studentData.email || studentData.studentEmail || studentData.contactEmail || '',
-        phone: studentData.phone || studentData.mobile || studentData.contactNumber || studentData.phoneNumber || '',
-        parentName: studentData.parentName || studentData.parentsName || studentData.guardianName || '',
-        attendingParent: studentData.attendingParent || studentData.accompanyingParent || studentData.parentAttending || '',
-        program: studentData.program || studentData.event || studentData.course || 'Cosmic Confluence',
-        mobile: studentData.mobile || studentData.phone || studentData.contactNumber || '',
-      };
-
-      console.log('🎓 Mapped student:', student);
-      return {
-        success: true,
-        student
-      };
-    }
-
-    console.log('❌ No matching student found for ID:', searchId);
-    
-    // Log all available document IDs for debugging
-    console.log('📋 Available document IDs:');
-    querySnapshot.docs.forEach(doc => {
-      console.log('  -', doc.id, '->', doc.id.toUpperCase().substring(0, 7));
-    });
-    
-    return { success: false };
-
-  } catch (error) {
-    console.error('❌ Error fetching student:', error);
-    return { success: false };
-  }
-};
-
-// Get today's attendance records
-export const getTodaysAttendance = async (p0?: number) => {
-  try {
-    const today = new Date().toLocaleDateString();
+    const today = new Date().toISOString().split('T')[0];
     const attendanceRef = collection(db, 'attendance');
     const q = query(attendanceRef, where('date', '==', today));
+    const querySnapshot = await getDocs(q);
 
-    const snapshot = await getDocs(q);
-    const records = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as AttendanceRecord[];
+    const records: AttendanceRecord[] = [];
+    querySnapshot.forEach((doc) => {
+      records.push({
+        id: doc.id,
+        ...doc.data()
+      } as AttendanceRecord);
+    });
 
     return {
       success: true,
-      records,
+      records: records.sort((a, b) => 
+        b.timestamp.toDate().getTime() - a.timestamp.toDate().getTime()
+      ),
       count: records.length
     };
   } catch (error) {
-    console.error('Error fetching attendance:', error);
-    return { success: false, records: [], count: 0 };
+    console.error('Error getting attendance:', error);
+    return {
+      success: false,
+      message: 'Failed to load attendance records'
+    };
   }
 };
 
-// Get attendance statistics with parent counts
-export const getAttendanceStats = async (dateRange?: { from: string; to: string }) => {
+/**
+ * Reset today's attendance
+ */
+export const resetTodaysAttendance = async (): Promise<{
+  success: boolean;
+  message?: string;
+}> => {
   try {
+    const today = new Date().toISOString().split('T')[0];
     const attendanceRef = collection(db, 'attendance');
-    let q: Query;
+    const q = query(attendanceRef, where('date', '==', today));
+    const querySnapshot = await getDocs(q);
 
-    if (dateRange) {
-      q = query(
-        attendanceRef,
-        where('date', '>=', dateRange.from),
-        where('date', '<=', dateRange.to)
-      );
-    } else {
-      q = query(attendanceRef);
-    }
+    const deletePromises = querySnapshot.docs.map((docSnapshot) =>
+      deleteDoc(doc(db, 'attendance', docSnapshot.id))
+    );
 
-    const snapshot = await getDocs(q);
-    const records = snapshot.docs.map(doc => doc.data()) as AttendanceRecord[];
-
-    const parentCounts = records.reduce((acc, record) => {
-      const parentType = record.attendingParent || 'None';
-      acc[parentType] = (acc[parentType] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    await Promise.all(deletePromises);
 
     return {
-      success: true,
-      total: records.length,
-      byClass: records.reduce((acc, record) => {
-        const className = record.class || 'Unknown';
-        acc[className] = (acc[className] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
-      bySchool: records.reduce((acc, record) => {
-        const schoolName = record.school || 'Unknown';
-        acc[schoolName] = (acc[schoolName] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
-      byParent: parentCounts,
+      success: true
     };
   } catch (error) {
-    console.error('Error fetching attendance stats:', error);
-    return { success: false, total: 0, byClass: {}, bySchool: {}, byParent: {} };
+    console.error('Error resetting attendance:', error);
+    return {
+      success: false,
+      message: 'Failed to reset attendance'
+    };
   }
 };
 
-// Export attendance data to CSV format
-export const exportAttendanceToCSV = async (dateRange?: { from: string; to: string }): Promise<{ success: boolean; data?: string; message?: string }> => {
+/**
+ * Get registration statistics
+ */
+export const getRegistrationStats = async (): Promise<{
+  success: boolean;
+  totalRegistrations?: number;
+  byClass?: Record<string, number>;
+  bySchool?: Record<string, number>;
+  message?: string;
+}> => {
   try {
-    const attendanceRef = collection(db, 'attendance');
-    let q: Query;
-
-    if (dateRange) {
-      q = query(
-        attendanceRef,
-        where('date', '>=', dateRange.from),
-        where('date', '<=', dateRange.to)
-      );
-    } else {
-      q = query(attendanceRef);
-    }
-
-    const snapshot = await getDocs(q);
-    const records = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as AttendanceRecord[];
-
-    if (records.length === 0) {
+    const allStudentsResult = await getAllRegisteredStudents();
+    
+    if (!allStudentsResult.success || !allStudentsResult.students) {
       return {
         success: false,
-        message: 'No attendance records found for the selected date range'
+        message: 'Failed to fetch registration data'
       };
     }
 
-    // Define CSV headers
-    const headers = [
-      'Student ID',
-      'Student Name',
-      'Class',
-      'School',
-      'Email',
-      'Date',
-      'Timestamp',
-      'Attending Parent',
-      'Parent Verified',
-      'Program',
-      'Marked By'
-    ];
+    const byClass: Record<string, number> = {};
+    const bySchool: Record<string, number> = {};
 
-    // Convert records to CSV rows
-    const csvRows = records.map(record => [
-      record.studentId || '',
-      record.studentName || '',
-      record.class || '',
-      record.school || '',
-      record.email || '',
-      record.date || '',
-      record.timestamp?.toDate?.()?.toLocaleString() || '',
-      record.attendingParent || 'None',
-      record.parentVerified ? 'Yes' : 'No',
-      record.program || '',
-      record.markedBy || 'System'
-    ]);
-
-    // Combine headers and rows
-    const csvContent = [
-      headers.join(','),
-      ...csvRows.map(row => row.map(field => `"${field}"`).join(','))
-    ].join('\n');
+    allStudentsResult.students.forEach(student => {
+      // Count by class
+      byClass[student.class] = (byClass[student.class] || 0) + 1;
+      
+      // Count by school
+      bySchool[student.school] = (bySchool[student.school] || 0) + 1;
+    });
 
     return {
       success: true,
-      data: csvContent
+      totalRegistrations: allStudentsResult.students.length,
+      byClass,
+      bySchool
     };
   } catch (error) {
-    console.error('Error exporting attendance to CSV:', error);
+    console.error('Error getting registration stats:', error);
     return {
       success: false,
-      message: 'Error exporting attendance data. Please try again.'
+      message: 'Error fetching registration statistics'
     };
   }
+};
+
+/**
+ * Quick validation for manual input
+ */
+export const quickValidateStudent = async (input: string): Promise<{
+  success: boolean;
+  student?: Student;
+  message?: string;
+}> => {
+  return await getStudentByQRCode(input);
+};
+
+// Re-export all commonly used functions
+export {
 };
