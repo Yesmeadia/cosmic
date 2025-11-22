@@ -23,18 +23,25 @@ interface ParentAccompanimentProps {
   }) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  previousAttendingParent?: string;
 }
 
 const ParentAccompaniment: React.FC<ParentAccompanimentProps> = ({ 
   student, 
   onConfirm, 
   onCancel, 
-  isLoading = false 
+  isLoading = false,
+  previousAttendingParent = ''
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedParent, setSelectedParent] = useState('');
+  const [selectedParent, setSelectedParent] = useState(() => previousAttendingParent || 'None');
   const [isParentVerified, setIsParentVerified] = useState(false);
-  const [customParent, setCustomParent] = useState('');
+  const [customParent, setCustomParent] = useState(() => {
+    if (previousAttendingParent && previousAttendingParent !== 'None' && previousAttendingParent !== 'Father' && previousAttendingParent !== 'Mother' && previousAttendingParent !== 'Both') {
+      return previousAttendingParent;
+    }
+    return '';
+  });
 
   const parentOptions = useMemo(() => [
     { key: 'Father', color: 'from-blue-400 to-blue-600'},
@@ -220,10 +227,12 @@ const ParentAccompaniment: React.FC<ParentAccompanimentProps> = ({
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   {parentOptions.map((option) => (
-                    <button
+                    <motion.button
                       key={option.key}
                       onClick={() => setSelectedParent(option.key)}
                       disabled={isLoading}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       aria-label={`Select ${option.key} as accompanying parent`}
                       className={`relative p-4 rounded-xl transition-all ${
                         selectedParent === option.key
@@ -233,14 +242,31 @@ const ParentAccompaniment: React.FC<ParentAccompanimentProps> = ({
                     >
                       <div className="text-center">
                         <div className="font-semibold text-sm">{option.key}</div>
+                        {previousAttendingParent === option.key && selectedParent !== option.key && (
+                          <p className="text-xs text-gray-500 mt-1">Previously marked</p>
+                        )}
                       </div>
                       
                       {selectedParent === option.key && (
-                        <div className="absolute -top-1 -right-1 bg-white rounded-full p-1">
-                          <CheckCircle className="w-3 h-3 text-green-500" />
-                        </div>
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1 -right-1 bg-white rounded-full p-1"
+                        >
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        </motion.div>
                       )}
-                    </button>
+                      
+                      {previousAttendingParent === option.key && selectedParent === option.key && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1"
+                        >
+                          <CheckCircle className="w-3 h-3 text-white fill-white" />
+                        </motion.div>
+                      )}
+                    </motion.button>
                   ))}
                 </div>
 
