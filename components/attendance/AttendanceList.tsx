@@ -1,10 +1,36 @@
+// ============================================================
+// components/attendance/AttendanceList.tsx
 'use client';
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Check, Search, Filter } from 'lucide-react';
 
-const AttendanceList = ({ attendanceList = [] }) => {
+interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  class: string;
+  school: string;
+  email: string;
+  date: string;
+  timestamp: Date;
+  attendingParent: string;
+  parentVerified: boolean;
+  program: string;
+}
+
+interface AttendanceListProps {
+  attendanceList?: AttendanceRecord[];
+}
+
+interface ParentFilter {
+  key: string;
+  label: string;
+  count: number;
+}
+
+const AttendanceList: React.FC<AttendanceListProps> = ({ attendanceList = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [parentFilter, setParentFilter] = useState('All');
 
@@ -41,7 +67,7 @@ const AttendanceList = ({ attendanceList = [] }) => {
 
     attendanceList.forEach(record => {
       if (['Father', 'Mother', 'Both', 'None'].includes(record.attendingParent)) {
-        counts[record.attendingParent]++;
+        counts[record.attendingParent as keyof typeof counts]++;
       } else {
         // Anything else (Friend, Grandfather, Aunt, etc.) goes to "Other" category
         counts.Other++;
@@ -71,7 +97,7 @@ const AttendanceList = ({ attendanceList = [] }) => {
     });
   }, [attendanceList, searchTerm, parentFilter]);
 
-  const getParentIcon = (parentType) => {
+  const getParentIcon = (parentType: string): string => {
     switch (parentType) {
       case 'Father': return '👨';
       case 'Mother': return '👩';
@@ -86,7 +112,7 @@ const AttendanceList = ({ attendanceList = [] }) => {
     }
   };
 
-  const getParticipationCount = (record) => {
+  const getParticipationCount = (record: AttendanceRecord): number => {
     if (record.attendingParent === 'None') {
       return 1; // Student only
     } else if (record.attendingParent === 'Both') {
@@ -96,7 +122,7 @@ const AttendanceList = ({ attendanceList = [] }) => {
     }
   };
 
-  const getDisplayParentType = (record) => {
+  const getDisplayParentType = (record: AttendanceRecord): string => {
     // If it's one of the standard types, show as is
     if (['Father', 'Mother', 'Both', 'None'].includes(record.attendingParent)) {
       return record.attendingParent;
@@ -105,7 +131,7 @@ const AttendanceList = ({ attendanceList = [] }) => {
     return record.attendingParent;
   };
 
-  const parentFilters = [
+  const parentFilters: ParentFilter[] = [
     { key: 'All', label: 'All Records', count: parentTypeCounts.All },
     { key: 'Father', label: 'Father', count: parentTypeCounts.Father },
     { key: 'Mother', label: 'Mother', count: parentTypeCounts.Mother },
@@ -169,6 +195,7 @@ const AttendanceList = ({ attendanceList = [] }) => {
             {parentFilters.map((filter) => (
               <button
                 key={filter.key}
+                type="button"
                 onClick={() => setParentFilter(filter.key)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                   parentFilter === filter.key

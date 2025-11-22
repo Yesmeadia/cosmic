@@ -12,6 +12,14 @@ import {
   exportAttendanceToCSV,
 } from '@/lib/attendance';
 import QRScanner from '@/components/attendance/QRCamera';
+import {
+  Timestamp,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import AttendanceHeader from '@/components/attendance/AttendanceHeader';
 import StatsCards from '@/components/attendance/StatsCards';
 import ManualQRInput from '@/components/attendance/ManualInput';
@@ -27,10 +35,11 @@ interface AttendanceRecord {
   school: string;
   email: string;
   date: string;
-  timestamp: Date;
+  timestamp: Date; // Changed to Date for consistency with local state
   attendingParent: string;
   parentVerified: boolean;
   program: string;
+  
 }
 
 interface Stats {
@@ -114,22 +123,33 @@ export default function AttendancePage() {
       ]);
 
       if (attendanceResult.success && attendanceResult.records) {
-        setAttendanceList(attendanceResult.records);
+        const records = attendanceResult.records.map((r) => ({
+          ...r,
+          id: r.id || `${r.studentId}-${Date.now()}`,
+          // Ensure timestamp is a Date object
+          timestamp: r.timestamp instanceof Timestamp
+            ? r.timestamp.toDate()
+            : r.timestamp instanceof Date
+            ? r.timestamp
+            : new Date(r.timestamp), // Fallback for string/other formats
+
+        })) as AttendanceRecord[];
+        
+        setAttendanceList(records);
         // Build processed set for duplicate prevention
         processedStudentsRef.current = new Set(
-          attendanceResult.records.map((r: AttendanceRecord) => r.studentId)
+          records.map((r: AttendanceRecord) => r.studentId)
         );
       }
 
       if (statsResult.success) {
-        // Handle both possible response structures
-        const statsData = statsResult.stats || statsResult;
+        const statsData = statsResult;
         
         // Ensure all numeric values are valid numbers, not NaN
         setStats({
           total: Number(statsData.total) || 0,
-          marked: Number(statsData.marked) || 0,
-          byClass: statsData.byClass || {},
+ marked: Number(statsData.marked) || 0,
+          byClass: statsData.byClass || {}, 
           byParent: statsData.byParent || {},
         });
       }
@@ -235,7 +255,7 @@ export default function AttendancePage() {
           studentName: selectedStudent.studentName,
           class: selectedStudent.class,
           school: selectedStudent.school,
-          email: selectedStudent.email,
+          email: selectedStudent.email || '',
           date: new Date().toLocaleDateString(),
           attendingParent: parentData.attendingParent,
           parentVerified: parentData.parentVerified,
@@ -264,8 +284,8 @@ export default function AttendancePage() {
           studentName: selectedStudent.studentName,
           class: selectedStudent.class,
           school: selectedStudent.school,
-          email: selectedStudent.email,
-          date: new Date().toLocaleDateString(),
+          email: selectedStudent.email || '',
+          date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
           timestamp: new Date(),
           attendingParent: parentData.attendingParent,
           parentVerified: parentData.parentVerified,
@@ -382,7 +402,7 @@ export default function AttendancePage() {
   // Export attendance
   const handleExport = useCallback(async () => {
     try {
-      const csv = await exportAttendanceToCSV();
+      const csv = await exportAttendanceToCSV() as unknown as string; // Cast to string as exportAttendanceToCSV returns a string
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
