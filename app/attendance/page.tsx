@@ -1,4 +1,4 @@
-// app/attendance/page.jsx
+// app/attendance/page.tsx
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -19,28 +19,73 @@ import ActionsSidebar from '@/components/attendance/ActionsSidebar';
 import AttendanceList from '@/components/attendance/AttendanceList';
 import ParentAccompaniment from '@/components/attendance/ParentAccompaniment';
 
+interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  class: string;
+  school: string;
+  email: string;
+  date: string;
+  timestamp: Date;
+  attendingParent: string;
+  parentVerified: boolean;
+  program: string;
+}
+
+interface Stats {
+  total: number;
+  marked: number;
+  byClass: Record<string, number>;
+  byParent: Record<string, number>;
+}
+
+interface ScanResult {
+  status: 'success' | 'error' | 'warning';
+  message: string;
+  student?: string;
+  class?: string;
+  parent?: string;
+  parentVerified?: boolean;
+  program?: string;
+}
+
+interface Student {
+  id: string;
+  studentName: string;
+  class: string;
+  school: string;
+  email: string;
+}
+
+interface ParentData {
+  attendingParent: string;
+  parentVerified: boolean;
+  program: string;
+}
+
 export default function AttendancePage() {
   const [isScanning, setIsScanning] = useState(false);
-  const [attendanceList, setAttendanceList] = useState([]);
-  const [stats, setStats] = useState({
+  const [attendanceList, setAttendanceList] = useState<AttendanceRecord[]>([]);
+  const [stats, setStats] = useState<Stats>({
     total: 0,
     marked: 0,
     byClass: {},
     byParent: {},
   });
-  const [scanResult, setScanResult] = useState(null);
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [useManualInput, setUseManualInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [currentTime, setCurrentTime] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showParentModal, setShowParentModal] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Memoized refs for performance
-  const scanTimeoutRef = useRef(null);
-  const processedStudentsRef = useRef(new Set());
+  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const processedStudentsRef = useRef(new Set<string>());
 
   // Initialize on mount
   useEffect(() => {
@@ -72,26 +117,34 @@ export default function AttendancePage() {
         setAttendanceList(attendanceResult.records);
         // Build processed set for duplicate prevention
         processedStudentsRef.current = new Set(
-          attendanceResult.records.map((r) => r.studentId)
+          attendanceResult.records.map((r: AttendanceRecord) => r.studentId)
         );
       }
 
       if (statsResult.success) {
         // Handle both possible response structures
         const statsData = statsResult.stats || statsResult;
-        setStats(statsData);
+        
+        // Ensure all numeric values are valid numbers, not NaN
+        setStats({
+          total: Number(statsData.total) || 0,
+          marked: Number(statsData.marked) || 0,
+          byClass: statsData.byClass || {},
+          byParent: statsData.byParent || {},
+        });
       }
 
       setIsInitialized(true);
     } catch (err) {
       console.error('Error loading initial data:', err);
       setError('Failed to load attendance data');
+      setIsInitialized(true); // Still mark as initialized to show UI
     }
   }, []);
 
   // Memoized scan handler
   const handleScan = useCallback(
-    async (qrCode) => {
+    async (qrCode: string) => {
       if (isLoading || !isInitialized) return;
 
       // Prevent duplicate scans within 2 seconds
@@ -171,7 +224,7 @@ export default function AttendancePage() {
 
   // Optimized parent confirmation
   const handleParentConfirm = useCallback(
-    async (parentData) => {
+    async (parentData: ParentData) => {
       if (!selectedStudent) return;
 
       setIsLoading(true);
@@ -205,7 +258,7 @@ export default function AttendancePage() {
         }
 
         // Update local state
-        const newRecord = {
+        const newRecord: AttendanceRecord = {
           id: markResult.data?.id || `${selectedStudent.id}-${Date.now()}`,
           studentId: selectedStudent.id,
           studentName: selectedStudent.studentName,
@@ -221,20 +274,19 @@ export default function AttendancePage() {
 
         setAttendanceList((prev) => [newRecord, ...prev]);
 
-        // Update stats
+        // Update stats with proper number handling
         setStats((prev) => {
           const byClass = { ...prev.byClass };
           const byParent = { ...prev.byParent };
 
           byClass[selectedStudent.class] =
-            (byClass[selectedStudent.class] || 0) + 1;
+            (Number(byClass[selectedStudent.class]) || 0) + 1;
           byParent[parentData.attendingParent] =
-            (byParent[parentData.attendingParent] || 0) + 1;
+            (Number(byParent[parentData.attendingParent]) || 0) + 1;
 
           return {
-            ...prev,
-            total: prev.total + 1,
-            marked: prev.marked + 1,
+            total: (Number(prev.total) || 0) + 1,
+            marked: (Number(prev.marked) || 0) + 1,
             byClass,
             byParent,
           };
@@ -289,7 +341,7 @@ export default function AttendancePage() {
   }, [selectedStudent]);
 
   // Play welcome message with proper voice loading
-  const playWelcomeMessage = useCallback((studentName, program = 'Cosmic Confluence') => {
+  const playWelcomeMessage = useCallback((studentName: string, program = 'Cosmic Confluence') => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       return;
     }
@@ -356,7 +408,7 @@ export default function AttendancePage() {
     }
   }, []);
 
-  if (!isInitialized || !isClient) {
+  if (!isInitialized || !isClient || !currentTime) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
