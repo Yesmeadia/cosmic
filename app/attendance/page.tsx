@@ -162,7 +162,7 @@ export default function AttendancePage() {
         // Ensure all numeric values are valid numbers, not NaN
         setStats({
           total: Number(statsData.total) || 0,
-          marked: Number(statsData.marked) || 0,
+          marked: Number(statsData.total) || 0,
           byClass: statsData.byClass || {},
           byParent: statsData.byParent || {},
         });
@@ -416,7 +416,7 @@ export default function AttendancePage() {
   // Export attendance
   const handleExport = useCallback(async () => {
     try {
-      const csv = await exportAttendanceToCSV();
+      const csv = await exportAttendanceToCSV() as unknown as string;
       const blob = new Blob([csv as string], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
