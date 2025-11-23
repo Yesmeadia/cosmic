@@ -6,6 +6,7 @@ export interface Registration {
   email: string;
   class: string;
   school: string;
+  place: string;
   fatherName: string;
   fathermobile: string;
   motherName: string;
