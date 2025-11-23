@@ -49,8 +49,6 @@ export const exportToPDF = (data: Registration[]) => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Clean white background with simple header
-  
   // Main Title - COSMIC CONFLUENCE
   doc.setTextColor(102, 51, 153); // Deep purple
   doc.setFontSize(22);
@@ -88,17 +86,19 @@ export const exportToPDF = (data: Registration[]) => {
   const startY = 38;
 
   autoTable(doc, {
-    head: [[
-      'ID',
-      'Student Name',
-      'Class',
-      'School',
-      'Place',
-      'Contact',
-      'Email',
-      'Parents',
-      'Date'
-    ]],
+    head: [
+      [
+        'ID',
+        'Student Name',
+        'Class',
+        'School',
+        'Place',
+        'Contact',
+        'Email',
+        'Parents',
+        'Date'
+      ]
+    ],
     body: data.map((row, index) => [
       `${index + 1}`,
       row.studentName || '-',
@@ -109,7 +109,7 @@ export const exportToPDF = (data: Registration[]) => {
       row.email || '-',
       `Father: ${row.fatherName || '-'}\nContact: ${row.fathermobile || '-'}\nMother: ${row.motherName || '-'}\nAttending: ${row.attendingParent || '-'}`,
       new Date(row.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    ]],
+    ]),
     startY: startY,
     styles: {
       fontSize: 7,
@@ -117,11 +117,11 @@ export const exportToPDF = (data: Registration[]) => {
       lineColor: [200, 200, 200],
       lineWidth: 0.1,
       textColor: [40, 40, 40],
-      fillColor: [255, 255, 255], // White background
+      fillColor: [255, 255, 255],
       minCellHeight: 14
     },
     headStyles: {
-      fillColor: [102, 51, 153], // Deep purple header
+      fillColor: [102, 51, 153],
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       fontSize: 8,
@@ -130,18 +130,18 @@ export const exportToPDF = (data: Registration[]) => {
       cellPadding: 3
     },
     alternateRowStyles: {
-      fillColor: [255, 255, 255] // White background for all rows
+      fillColor: [255, 255, 255]
     },
     columnStyles: {
-      0: { cellWidth: 12, halign: 'center' }, // ID
-      1: { cellWidth: 35, fontStyle: 'bold' }, // Student Name
-      2: { cellWidth: 15, halign: 'center' }, // Class
-      3: { cellWidth: 40 }, // School
-      4: { cellWidth: 30 }, // Place
-      5: { cellWidth: 32, fontSize: 6.5 }, // Contact
-      6: { cellWidth: 38, fontSize: 6.5 }, // Email
-      7: { cellWidth: 48, fontSize: 6.5 }, // Parents
-      8: { cellWidth: 22, halign: 'center' } // Date
+      0: { cellWidth: 12, halign: 'center' },
+      1: { cellWidth: 35, fontStyle: 'bold' },
+      2: { cellWidth: 15, halign: 'center' },
+      3: { cellWidth: 40 },
+      4: { cellWidth: 30 },
+      5: { cellWidth: 32, fontSize: 6.5 },
+      6: { cellWidth: 38, fontSize: 6.5 },
+      7: { cellWidth: 48, fontSize: 6.5 },
+      8: { cellWidth: 22, halign: 'center' }
     },
     margin: { top: startY, right: 8, bottom: 20, left: 8 },
     didDrawPage: function(data) {
@@ -498,7 +498,7 @@ export const exportToCSV = (data: Registration[]): void => {
       if (stringCell.includes(',') || stringCell.includes('"') || stringCell.includes('\n')) {
         return `"${stringCell.replace(/"/g, '""')}"`;
       }
-      return stringCell; // No comma here
+      return stringCell;
     }).join(','))
   ].join('\n');
 
