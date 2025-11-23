@@ -27,6 +27,7 @@ export const RegistrationForm: React.FC = () => {
     email: '',
     class: '',
     school: '',
+    place: '', // ⭐ Added place field
     fatherName: '',
     motherName: '',
     attendingParent: '',
