@@ -109,7 +109,7 @@ export const exportToPDF = (data: Registration[]) => {
       row.email || '-',
       `Father: ${row.fatherName || '-'}\nContact: ${row.fathermobile || '-'}\nMother: ${row.motherName || '-'}\nAttending: ${row.attendingParent || '-'}`,
       new Date(row.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    ]),
+    ]],
     startY: startY,
     styles: {
       fontSize: 7,
@@ -117,7 +117,8 @@ export const exportToPDF = (data: Registration[]) => {
       lineColor: [200, 200, 200],
       lineWidth: 0.1,
       textColor: [40, 40, 40],
-      fillColor: [255, 255, 255] // White background
+      fillColor: [255, 255, 255], // White background
+      minCellHeight: 14
     },
     headStyles: {
       fillColor: [102, 51, 153], // Deep purple header
@@ -130,11 +131,6 @@ export const exportToPDF = (data: Registration[]) => {
     },
     alternateRowStyles: {
       fillColor: [255, 255, 255] // White background for all rows
-    },
-
-    styles: { // Changed from rowStyles to styles
-      minCellHeight: 14,
-      fillColor: [255, 255, 255] // White background
     },
     columnStyles: {
       0: { cellWidth: 12, halign: 'center' }, // ID
@@ -502,7 +498,7 @@ export const exportToCSV = (data: Registration[]): void => {
       if (stringCell.includes(',') || stringCell.includes('"') || stringCell.includes('\n')) {
         return `"${stringCell.replace(/"/g, '""')}"`;
       }
-      return stringCell;
+      return stringCell; // No comma here
     }).join(','))
   ].join('\n');
 
