@@ -131,7 +131,8 @@ export const exportToPDF = (data: Registration[]) => {
     alternateRowStyles: {
       fillColor: [255, 255, 255] // White background for all rows
     },
-    rowStyles: {
+
+    styles: { // Changed from rowStyles to styles
       minCellHeight: 14,
       fillColor: [255, 255, 255] // White background
     },
