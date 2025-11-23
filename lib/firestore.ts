@@ -46,122 +46,147 @@ export const exportToPDF = (data: Registration[]) => {
     format: 'a4'
   });
 
-  // Add header
   const pageWidth = doc.internal.pageSize.getWidth();
-  const logoWidth = 20;
-  const logoHeight = 15;
-  const logoX = 10;
-  const logoY = 10;
-  
-  // doc.addImage(cosmicLogoUrl, 'PNG', logoX, logoY, logoWidth, logoHeight); // Uncomment and provide cosmicLogoUrl if you have the image data
+  const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Title - COSMIC CONFLUENCE
-  doc.setTextColor(102, 51, 153); // Deep purple (RGB)
-  doc.setFontSize(16);
+  // Clean white background with simple header
+  
+  // Main Title - COSMIC CONFLUENCE
+  doc.setTextColor(102, 51, 153); // Deep purple
+  doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text('COSMIC CONFLUENCE', pageWidth / 2, logoY + logoHeight / 2, {
-    align: 'center',
-    baseline: 'middle'
+  doc.text('COSMIC CONFLUENCE 2025', pageWidth / 2, 15, {
+    align: 'center'
   });
 
   // Subtitle - REGISTRATION DETAILS
   doc.setTextColor(60, 60, 60); // Dark gray
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
-  doc.text('REGISTRATION DETAILS', pageWidth / 2, logoY + logoHeight / 2 + 8, {
-    align: 'center',
-    baseline: 'middle'
+  doc.text('Student Registration Report', pageWidth / 2, 23, {
+    align: 'center'
   });
 
-  // Store the Y position after header for the table
-  const startY = logoY + logoHeight + 5;
+  // Date and count info
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  const reportDate = new Date().toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  doc.text(`Generated: ${reportDate} | Total Records: ${data.length}`, pageWidth / 2, 30, {
+    align: 'center'
+  });
+
+  // Separator line
+  doc.setDrawColor(102, 51, 153);
+  doc.setLineWidth(0.5);
+  doc.line(10, 33, pageWidth - 10, 33);
+
+  // Table starts after header
+  const startY = 38;
 
   autoTable(doc, {
     head: [[
+      'ID',
       'Student Name',
-      'Mobile',
-      'WhatsApp',
-      'Email',
       'Class',
       'School',
       'Place',
-      'Father Name',
-      'Father Mobile',
-      'Mother Name',
-      'Attending Parent',
+      'Contact',
+      'Email',
+      'Parents',
+      'Date'
     ]],
-    body: data.map(row => [
+    body: data.map((row, index) => [
+      `${index + 1}`,
       row.studentName || '-',
-      row.mobile || '-',
-      row.whatsapp || '-',
-      row.email || '-',
       row.class || '-',
       row.school || '-',
       row.place || '-',
-      row.fatherName || '-',
-      row.fathermobile || '-',
-      row.motherName || '-',
-      row.attendingParent || '-' 
+      `Mobile: ${row.mobile || '-'}\nWhatsApp: ${row.whatsapp || '-'}`,
+      row.email || '-',
+      `Father: ${row.fatherName || '-'}\nContact: ${row.fathermobile || '-'}\nMother: ${row.motherName || '-'}\nAttending: ${row.attendingParent || '-'}`,
+      new Date(row.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     ]),
     startY: startY,
     styles: {
       fontSize: 7,
-      cellPadding: 1.5
+      cellPadding: 2.5,
+      lineColor: [200, 200, 200],
+      lineWidth: 0.1,
+      textColor: [40, 40, 40],
+      fillColor: [255, 255, 255] // White background
     },
     headStyles: {
-      fillColor: [102, 51, 153], // Deep purple matching title
-      textColor: 255,
+      fillColor: [102, 51, 153], // Deep purple header
+      textColor: [255, 255, 255],
       fontStyle: 'bold',
-      fontSize: 7
+      fontSize: 8,
+      halign: 'center',
+      valign: 'middle',
+      cellPadding: 3
     },
     alternateRowStyles: {
-      fillColor: [245, 245, 245]
+      fillColor: [255, 255, 255] // White background for all rows
+    },
+    rowStyles: {
+      minCellHeight: 14,
+      fillColor: [255, 255, 255] // White background
     },
     columnStyles: {
-      0: { cellWidth: 28 }, // Student Name
-      1: { cellWidth: 12 }, // Gender
-      2: { cellWidth: 20 }, // Mobile
-      3: { cellWidth: 20 }, // WhatsApp
-      4: { cellWidth: 32 }, // Email
-      5: { cellWidth: 10 }, // Class
-      6: { cellWidth: 30 }, // School
-      7: { cellWidth: 22 }, // Place
-      8: { cellWidth: 25 }, // Father Name
-      9: { cellWidth: 20 }, // Father Mobile
-      10: { cellWidth: 25 }, // Mother Name
-      11: { cellWidth: 18 }, // Attending Parent
-      12: { cellWidth: 18 }, // Payment Status
-      13: { cellWidth: 20 }, // Transaction Ref
-      14: { cellWidth: 18 }  // Date
+      0: { cellWidth: 12, halign: 'center' }, // ID
+      1: { cellWidth: 35, fontStyle: 'bold' }, // Student Name
+      2: { cellWidth: 15, halign: 'center' }, // Class
+      3: { cellWidth: 40 }, // School
+      4: { cellWidth: 30 }, // Place
+      5: { cellWidth: 32, fontSize: 6.5 }, // Contact
+      6: { cellWidth: 38, fontSize: 6.5 }, // Email
+      7: { cellWidth: 48, fontSize: 6.5 }, // Parents
+      8: { cellWidth: 22, halign: 'center' } // Date
     },
-    margin: { top: startY, right: 10, bottom: 20, left: 10 },
+    margin: { top: startY, right: 8, bottom: 20, left: 8 },
     didDrawPage: function(data) {
-      // Footer on each page
       const pageCount = doc.getNumberOfPages();
       const currentPage = data.pageNumber;
       
-      // Generated date in center (no time)
-      const generatedDate = new Date().toLocaleDateString();
+      // Simple footer separator line
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+      doc.line(10, pageHeight - 15, pageWidth - 10, pageHeight - 15);
+      
+      // Left: Organization name
       doc.setFontSize(8);
+      doc.setTextColor(102, 51, 153);
+      doc.setFont('helvetica', 'bold');
+      doc.text('YES INDIA FOUNDATION', 10, pageHeight - 8);
+      
+      // Center: Generation date
+      doc.setFontSize(7);
       doc.setTextColor(100, 100, 100);
+      doc.setFont('helvetica', 'normal');
       doc.text(
-        `Generated on: ${generatedDate}`, 
+        `Report Generated: ${reportDate}`, 
         pageWidth / 2, 
-        doc.internal.pageSize.getHeight() - 10, 
+        pageHeight - 8, 
         { align: 'center' }
       );
 
-      // Page number on left
+      // Right: Page number
+      doc.setFontSize(8);
+      doc.setTextColor(102, 51, 153);
+      doc.setFont('helvetica', 'bold');
       doc.text(
         `Page ${currentPage} of ${pageCount}`, 
-        10, 
-        doc.internal.pageSize.getHeight() - 10, 
-        { align: 'left' }
+        pageWidth - 10, 
+        pageHeight - 8, 
+        { align: 'right' }
       );
     }
   });
   
-  doc.save(`registrations_${Date.now()}.pdf`);
+  doc.save(`Cosmic_Confluence_Registrations_${new Date().toISOString().split('T')[0]}.pdf`);
 };
 
 export const addRegistration = async (data: Omit<Registration, 'id' | 'timestamp' | 'paymentStatus'> & { isWaitlist?: boolean }) => {

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { onAuthChange } from '@/lib/auth';
-import { getRegistrationsWithStats } from '@/lib/firestore';
+import { getRegistrationsWithStats, deleteRegistration, moveToSpam } from '@/lib/firestore';
 import { Registration, FilterState, Stats } from '@/types';
 import { Header } from '@/components/dashboard/Header';
 import { StatsCards } from '@/components/dashboard/StatsCards';
@@ -82,6 +82,7 @@ export default function DashboardPage() {
         reg.studentName?.toLowerCase().includes(searchLower) ||
         reg.email?.toLowerCase().includes(searchLower) ||
         reg.school?.toLowerCase().includes(searchLower) ||
+        reg.place?.toLowerCase().includes(searchLower) ||
         reg.transactionReference?.toLowerCase().includes(searchLower)
       );
     }
@@ -112,6 +113,8 @@ export default function DashboardPage() {
             registrations={filteredData}
             onUpdate={loadData}
             onEditPayment={handleEditPayment}
+            onDelete={deleteRegistration}
+            onMoveToSpam={moveToSpam}
           />
           <Visualizations stats={stats} />
         </div>

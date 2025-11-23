@@ -3,23 +3,8 @@
 import React, { useState } from 'react';
 import { Trash2, Clock, CheckCircle, XCircle, Calendar, Edit, AlertOctagon } from 'lucide-react';
 
-interface Registration {
-  id?: string;
-  studentName: string;
-  mobile: string;
-  whatsapp: string;
-  email: string;
-  class: string;
-  school: string;
-  place: string;
-  gender: string;
-  attendingParent: string;
-  fathermobile: string;
-  isWaitlist: boolean;
-  paymentStatus?: string;
-  transactionReference?: string;
-  timestamp: string;
-}
+// Remove local interface and import from types
+import type { Registration } from '@/types';
 
 interface RegistrationTableProps {
   registrations: Registration[];
@@ -227,7 +212,7 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
                   <div className="text-sm font-medium text-gray-900">
                     {registration.studentName}
                   </div>
-                  <div className="text-xs text-gray-500">{registration.gender}</div>
+                  <div className="text-xs text-gray-500">{registration.gender || '-'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {registration.class}
