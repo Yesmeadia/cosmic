@@ -2,8 +2,48 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, AlertCircle } from 'lucide-react';
-import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  required?: boolean;
+}
+
+const Input: React.FC<InputProps> = ({ label, required, className = '', ...props }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${className}`}
+      {...props}
+    />
+  </div>
+);
+
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  required?: boolean;
+  options: { value: string; label: string }[];
+}
+
+const Select: React.FC<SelectProps> = ({ label, required, options, className = '', ...props }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${className}`}
+      {...props}
+    >
+      <option value="">Select {label}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  </div>
+);
 
 interface StudentFormData {
   studentName: string;
@@ -12,6 +52,7 @@ interface StudentFormData {
   email: string;
   class: string;
   school: string;
+  place: string;
   gender: string;
   whatsappSameAsMobile: boolean;
 }
@@ -50,6 +91,7 @@ export const StudentInfo: React.FC<StudentInfoProps> = ({ formData, onChange, on
     email: formData.email ?? '',
     class: formData.class ?? '',
     school: formData.school ?? '',
+    place: formData.place ?? '',
     gender: formData.gender ?? '',
     whatsappSameAsMobile: formData.whatsappSameAsMobile ?? false,
   };
@@ -152,6 +194,7 @@ export const StudentInfo: React.FC<StudentInfoProps> = ({ formData, onChange, on
       !emailError &&
       safeFormData.class !== '' &&
       safeFormData.school.trim() !== '' &&
+      safeFormData.place.trim() !== '' &&
       safeFormData.gender !== '';
 
     if (onValidationChange) {
@@ -408,6 +451,14 @@ export const StudentInfo: React.FC<StudentInfoProps> = ({ formData, onChange, on
           options={classOptions}
           value={safeFormData.class}
           onChange={(e) => onChange('class', e.target.value)}
+        />
+        <Input
+          label="Place"
+          type="text"
+          required
+          value={safeFormData.place}
+          onChange={(e) => onChange('place', e.target.value)}
+          placeholder="City or location"
         />
 
         <Input

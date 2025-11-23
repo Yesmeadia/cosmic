@@ -55,55 +55,84 @@ export const exportToPDF = (data: Registration[]) => {
   
   // doc.addImage(cosmicLogoUrl, 'PNG', logoX, logoY, logoWidth, logoHeight); // Uncomment and provide cosmicLogoUrl if you have the image data
 
-  // Add "Registration Details" heading in center
   // Title - COSMIC CONFLUENCE
-doc.setTextColor(102, 51, 153); // Deep purple (RGB)
-doc.setFontSize(16);
-doc.setFont('helvetica', 'bold');
-doc.text('COSMIC CONFLUENCE', pageWidth / 2, logoY + logoHeight / 2, {
-  align: 'center',
-  baseline: 'middle'
-});
+  doc.setTextColor(102, 51, 153); // Deep purple (RGB)
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('COSMIC CONFLUENCE', pageWidth / 2, logoY + logoHeight / 2, {
+    align: 'center',
+    baseline: 'middle'
+  });
 
-// Subtitle - REGISTRATION DETAILS
-doc.setTextColor(60, 60, 60); // Dark gray
-doc.setFontSize(14);
-doc.setFont('helvetica', 'normal');
-doc.text('REGISTRATION DETAILS', pageWidth / 2, logoY + logoHeight / 2 + 8, {
-  align: 'center',
-  baseline: 'middle'
-});
-
+  // Subtitle - REGISTRATION DETAILS
+  doc.setTextColor(60, 60, 60); // Dark gray
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'normal');
+  doc.text('REGISTRATION DETAILS', pageWidth / 2, logoY + logoHeight / 2 + 8, {
+    align: 'center',
+    baseline: 'middle'
+  });
 
   // Store the Y position after header for the table
   const startY = logoY + logoHeight + 5;
 
   autoTable(doc, {
-    head: [[ 'Student Name', 'Mobile', 'WhatsApp', 'Email', 'Class', 'School', 'Father Name', 'Mother Name', 'Attending Parent', 'Timestamp']],
+    head: [[
+      'Student Name',
+      'Mobile',
+      'WhatsApp',
+      'Email',
+      'Class',
+      'School',
+      'Place',
+      'Father Name',
+      'Father Mobile',
+      'Mother Name',
+      'Attending Parent',
+    ]],
     body: data.map(row => [
-      row.studentName,
-      row.mobile,
-      row.whatsapp,
-      row.email,
-      row.class,
-      row.school,
-      row.fatherName,
-      row.motherName,
-      row.attendingParent,
-      new Date(row.timestamp).toLocaleString()
+      row.studentName || '-',
+      row.mobile || '-',
+      row.whatsapp || '-',
+      row.email || '-',
+      row.class || '-',
+      row.school || '-',
+      row.place || '-',
+      row.fatherName || '-',
+      row.fathermobile || '-',
+      row.motherName || '-',
+      row.attendingParent || '-' 
     ]),
     startY: startY,
     styles: {
-      fontSize: 8,
-      cellPadding: 2
+      fontSize: 7,
+      cellPadding: 1.5
     },
     headStyles: {
-      fillColor: [41, 128, 185], // Blue
+      fillColor: [102, 51, 153], // Deep purple matching title
       textColor: 255,
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      fontSize: 7
     },
     alternateRowStyles: {
       fillColor: [245, 245, 245]
+    },
+    columnStyles: {
+      0: { cellWidth: 28 }, // Student Name
+      1: { cellWidth: 12 }, // Gender
+      2: { cellWidth: 20 }, // Mobile
+      3: { cellWidth: 20 }, // WhatsApp
+      4: { cellWidth: 32 }, // Email
+      5: { cellWidth: 10 }, // Class
+      6: { cellWidth: 30 }, // School
+      7: { cellWidth: 22 }, // Place
+      8: { cellWidth: 25 }, // Father Name
+      9: { cellWidth: 20 }, // Father Mobile
+      10: { cellWidth: 25 }, // Mother Name
+      11: { cellWidth: 18 }, // Attending Parent
+      12: { cellWidth: 18 }, // Payment Status
+      13: { cellWidth: 20 }, // Transaction Ref
+      14: { cellWidth: 18 }  // Date
     },
     margin: { top: startY, right: 10, bottom: 20, left: 10 },
     didDrawPage: function(data) {
@@ -111,12 +140,12 @@ doc.text('REGISTRATION DETAILS', pageWidth / 2, logoY + logoHeight / 2 + 8, {
       const pageCount = doc.getNumberOfPages();
       const currentPage = data.pageNumber;
       
-      // Generated time and date in center
-      const generatedAt = new Date().toLocaleString();
+      // Generated date in center (no time)
+      const generatedDate = new Date().toLocaleDateString();
       doc.setFontSize(8);
       doc.setTextColor(100, 100, 100);
       doc.text(
-        `Generated on: ${generatedAt}`, 
+        `Generated on: ${generatedDate}`, 
         pageWidth / 2, 
         doc.internal.pageSize.getHeight() - 10, 
         { align: 'center' }
@@ -306,6 +335,7 @@ export const moveToSpam = async (id: string, spamReason: string): Promise<{ succ
     // Add to spam collection with spam metadata
     const spamData = {
       ...registrationData,
+      spamReason,
       markedAsSpamAt: Timestamp.now().toDate().toISOString(),
       originalId: id
     };
@@ -336,7 +366,7 @@ export const restoreFromSpam = async (spamId: string): Promise<{ success: boolea
     const spamData = spamSnap.data();
     
     // Remove spam-specific fields
-    const { markedAsSpamAt, originalId, ...registrationData } = spamData;
+    const { markedAsSpamAt, originalId, spamReason, ...registrationData } = spamData;
     
     // Check if we need to update waitlist status
     const currentCount = await getRegistrationCount();
@@ -401,40 +431,53 @@ export const exportToCSV = (data: Registration[]): void => {
   const headers = [
     'Status',
     'Student Name',
+    'Gender',
     'Mobile',
     'WhatsApp',
     'Email',
     'Class',
     'School',
+    'Place',
     'Father Name',
+    'Father Mobile',
     'Mother Name',
     'Attending Parent',
     'Payment Status',
     'Transaction Reference',
-    'Timestamp',
+    'Date',
     'Last Updated'
   ];
 
   const rows = data.map(reg => [
     reg.isWaitlist ? 'Waitlist' : 'Confirmed',
-    reg.studentName,
-    reg.mobile,
-    reg.whatsapp,
-    reg.email,
-    reg.class,
-    reg.school,
-    reg.fatherName,
-    reg.motherName,
-    reg.attendingParent,
-    reg.paymentStatus,
-    reg.transactionReference || 'N/A',
-    new Date(reg.timestamp).toLocaleString(),
-    reg.updatedAt ? new Date(reg.updatedAt).toLocaleString() : 'N/A'
+    reg.studentName || '-',
+    reg.gender || '-',
+    reg.mobile || '-',
+    reg.whatsapp || '-',
+    reg.email || '-',
+    reg.class || '-',
+    reg.school || '-',
+    reg.place || '-',
+    reg.fatherName || '-',
+    reg.fathermobile || '-',
+    reg.motherName || '-',
+    reg.attendingParent || '-',
+    reg.paymentStatus || 'pending',
+    reg.transactionReference || '-',
+    new Date(reg.timestamp).toLocaleDateString(),
+    reg.updatedAt ? new Date(reg.updatedAt).toLocaleDateString() : '-'
   ]);
 
   const csvContent = [
     headers.join(','),
-    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ...rows.map(row => row.map(cell => {
+      // Escape fields containing commas, quotes, or newlines
+      const stringCell = String(cell);
+      if (stringCell.includes(',') || stringCell.includes('"') || stringCell.includes('\n')) {
+        return `"${stringCell.replace(/"/g, '""')}"`;
+      }
+      return stringCell;
+    }).join(','))
   ].join('\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

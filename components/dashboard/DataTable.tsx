@@ -1,20 +1,40 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Registration } from '@/types';
 import { Trash2, Clock, CheckCircle, XCircle, Calendar, Edit, AlertOctagon } from 'lucide-react';
-import { deleteRegistration, moveToSpam } from '@/lib/firestore';
+
+interface Registration {
+  id?: string;
+  studentName: string;
+  mobile: string;
+  whatsapp: string;
+  email: string;
+  class: string;
+  school: string;
+  place: string;
+  gender: string;
+  attendingParent: string;
+  fathermobile: string;
+  isWaitlist: boolean;
+  paymentStatus?: string;
+  transactionReference?: string;
+  timestamp: string;
+}
 
 interface RegistrationTableProps {
   registrations: Registration[];
   onUpdate: () => void;
   onEditPayment?: (registration: Registration) => void;
+  onDelete?: (id: string) => Promise<{ success: boolean }>;
+  onMoveToSpam?: (id: string, reason: string) => Promise<{ success: boolean }>;
 }
 
 export const RegistrationTable: React.FC<RegistrationTableProps> = ({ 
   registrations, 
   onUpdate,
-  onEditPayment 
+  onEditPayment,
+  onDelete,
+  onMoveToSpam
 }) => {
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'waitlist'>('all');
   const [spamModal, setSpamModal] = useState<{ isOpen: boolean; registration: Registration | null }>({
@@ -25,11 +45,13 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
 
   const handleDelete = async (id: string, studentName: string) => {
     if (confirm(`Are you sure you want to delete registration for ${studentName}?`)) {
-      const result = await deleteRegistration(id);
-      if (result.success) {
-        onUpdate();
-      } else {
-        alert('Failed to delete registration. Please try again.');
+      if (onDelete) {
+        const result = await onDelete(id);
+        if (result.success) {
+          onUpdate();
+        } else {
+          alert('Failed to delete registration. Please try again.');
+        }
       }
     }
   };
@@ -47,13 +69,15 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
       return;
     }
 
-    const result = await moveToSpam(spamModal.registration.id, spamReason);
-    if (result.success) {
-      setSpamModal({ isOpen: false, registration: null });
-      setSpamReason('');
-      onUpdate();
-    } else {
-      alert('Failed to move registration to spam. Please try again.');
+    if (onMoveToSpam) {
+      const result = await onMoveToSpam(spamModal.registration.id, spamReason);
+      if (result.success) {
+        setSpamModal({ isOpen: false, registration: null });
+        setSpamReason('');
+        onUpdate();
+      } else {
+        alert('Failed to move registration to spam. Please try again.');
+      }
     }
   };
 
@@ -158,6 +182,9 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
                 School
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Place
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Mobile
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -207,6 +234,9 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                   {registration.school}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                  {registration.place || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {registration.mobile}
@@ -321,4 +351,4 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
       )}
     </div>
   );
-}
+};
