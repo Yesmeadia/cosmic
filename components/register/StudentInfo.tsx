@@ -64,6 +64,8 @@ interface StudentInfoProps {
 }
 
 const classOptions = [
+  { value: '7th', label: '7th' },
+  { value: '8th', label: '8th' },
   { value: '9th', label: '9th' },
   { value: '10th', label: '10th' },
   { value: '11th', label: '11th' },

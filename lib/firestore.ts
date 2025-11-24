@@ -88,7 +88,7 @@ export const exportToPDF = (data: Registration[]) => {
   autoTable(doc, {
     head: [
       [
-        'ID',
+        'SL NO',
         'Student Name',
         'Class',
         'School',
@@ -452,6 +452,7 @@ export const moveWaitlistToConfirmed = async (id: string) => {
 export const exportToCSV = (data: Registration[]): void => {
   const headers = [
     'Status',
+    'Registration ID',
     'Student Name',
     'Gender',
     'Mobile',
@@ -472,6 +473,7 @@ export const exportToCSV = (data: Registration[]): void => {
 
   const rows = data.map(reg => [
     reg.isWaitlist ? 'Waitlist' : 'Confirmed',
+    reg.id || '-',
     reg.studentName || '-',
     reg.gender || '-',
     reg.mobile || '-',

@@ -35,6 +35,8 @@ export const Filters: React.FC<FiltersProps> = ({ filter, onFilterChange, data }
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         >
           <option value="">All Classes</option>
+          <option value="7th">7th</option>
+          <option value="8th">8th</option>
           <option value="9th">9th</option>
           <option value="10th">10th</option>
           <option value="11th">11th</option>
