@@ -18,7 +18,6 @@ export const RegistrationForm: React.FC = () => {
   const [registrationCount, setRegistrationCount] = useState(0);
   const [step1Valid, setStep1Valid] = useState(false);
   const [step2Valid, setStep2Valid] = useState(false);
-  const [paymentAgreed, setPaymentAgreed] = useState(false);
 
   const [formData, setFormData] = useState({
     studentName: '',
@@ -69,7 +68,7 @@ export const RegistrationForm: React.FC = () => {
     e.preventDefault();
 
     // Final validation check
-    if (!step1Valid || !step2Valid || !paymentAgreed) {
+    if (!step1Valid || !step2Valid) {
       alert('Please fill in all required fields and agree to the payment terms before submitting.');
       return;
     }
@@ -178,36 +177,6 @@ export const RegistrationForm: React.FC = () => {
                   onChange={handleChange}
                   onValidationChange={setStep2Valid}
                 />
-
-                {/* Payment Agreement Checkbox */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="mt-8 pt-8 border-t-2 border-gray-200"
-                >
-                  <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={paymentAgreed}
-                      onChange={(e) => setPaymentAgreed(e.target.checked)}
-                      className="w-5 h-5 text-indigo-600 border-gray-300 rounded cursor-pointer mt-0.5 flex-shrink-0"
-                    />
-                    <span className="text-sm font-semibold text-gray-700">
-                      By submission, I agree to pay AED 100 soon.
-                    </span>
-                  </label>
-                  {!paymentAgreed && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-2 text-xs text-amber-600 text-center font-medium"
-                    >
-                      ⚠️ Please agree to the payment terms to proceed with submission
-                    </motion.p>
-                  )}
-                </motion.div>
               </motion.div>
             )}
 
@@ -238,7 +207,7 @@ export const RegistrationForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={isSubmitting || !step2Valid || !paymentAgreed}
+                  disabled={isSubmitting || !step2Valid}
                   className="flex-1 py-3 px-6 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (

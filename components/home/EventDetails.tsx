@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
-import { Calendar, Clock, MapPin, Users, Award, Star, GraduationCap, Rocket, CircleDollarSign } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Award, Star, GraduationCap, Rocket} from 'lucide-react';
 
 interface Presenter {
   name: string;
@@ -36,8 +36,7 @@ const eventDetailsData: EventDetail[] = [
   { icon: Calendar, title: 'Date', value: 'November 30, 2025' },
   { icon: Clock, title: 'Time', value: '9:00 AM - 1:00 PM' },
   { icon: MapPin, title: 'Venue', value: 'Grand Arena, Al-Wahda Mall, Abu Dhabi' },
-  { icon: Users, title: 'Expected', value: 'Only For 100 participants' },
-  { icon: CircleDollarSign, title: 'Invest', value: '100 AED' }
+  { icon: Users, title: 'Expected', value: 'Only For 100 participants' }
 ];
 
 // Define transitions separately with proper typing
