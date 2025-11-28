@@ -193,10 +193,10 @@ const AttendanceSection: React.FC = () => {
 
     } catch (err) {
       console.error('Error processing scan:', err);
-      setError('Error processing QR code. Please try again.');
+      setError('Error processing Barcode. Please try again.');
       setScanResult({
         status: 'error',
-        message: 'Error processing QR code. Please try again.'
+        message: 'Error processing Barcode. Please try again.'
       });
       setTimeout(() => setScanResult(null), 3000);
     } finally {
@@ -352,7 +352,7 @@ const AttendanceSection: React.FC = () => {
               <div className="flex items-center gap-2 mb-4 md:mb-6">
                 <div className="w-2 h-6 bg-blue-600 rounded-full"></div>
                 <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
-                  {useManualInput ? 'Manual Input' : 'QR Code Scanner'}
+                  {useManualInput ? 'Manual Input' : 'Barcode Scanner'}
                 </h2>
               </div>
 
