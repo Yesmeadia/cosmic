@@ -1,42 +1,165 @@
-// components/attendance/QRCamera.tsx
-'use client';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, X, CheckCircle, AlertCircle } from 'lucide-react';
+import jsQR from 'jsqr';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Camera } from 'lucide-react';
-
-interface QRScannerProps {
-  onScan: (studentId: string) => void;
-  isScanning: boolean;
+interface ScannedRecord {
+  id: string;
+  data: string;
+  timestamp: Date;
+  status: 'success' | 'error';
 }
 
-const QRScanner: React.FC<QRScannerProps> = ({ onScan, isScanning }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="relative bg-black rounded-xl overflow-hidden w-full"
-    >
-      <motion.div
-        className="w-full py-16 md:py-24 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900"
-      >
-        <div className="text-center text-white p-4 md:p-6">
-          <motion.div
-            animate={{ y: [0, -5, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-gray-600"
-          >
-            <Camera className="w-6 h-6 md:w-8 md:h-8 text-gray-400" />
-          </motion.div>
-          <p className="text-base md:text-lg font-bold mb-2">QR Scanner</p>
-          <p className="text-xs md:text-sm text-gray-400">Camera feature coming soon</p>
-          {isScanning && (
-            <p className="text-xs text-blue-400 mt-3">Scanning: {isScanning ? 'Active' : 'Inactive'}</p>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
+interface BarcodeProps {
+  onScan?: (data: string) => void;
+  isScanning?: boolean;
+}
 
-export default QRScanner;
+export default function BarcodeScanner({ onScan, isScanning: externalIsScanning }: BarcodeProps) {
+  const [isScanning, setIsScanning] = useState(true);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationIdRef = useRef<number>();
+  const streamRef = useRef<MediaStream>();
+  const scannedCodesRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (externalIsScanning !== undefined) {
+      setIsScanning(externalIsScanning);
+    }
+  }, [externalIsScanning]);
+
+  useEffect(() => {
+    if (!isScanning) return;
+
+    const startScanning = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+        });
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          streamRef.current = stream;
+          
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play();
+            scanFrame();
+          };
+        }
+      } catch (error) {
+        showNotification('Camera access denied', 'error');
+        setIsScanning(false);
+      }
+    };
+
+    const scanFrame = () => {
+      if (!videoRef.current || !canvasRef.current || videoRef.current.readyState !== videoRef.current.HAVE_ENOUGH_DATA) {
+        animationIdRef.current = requestAnimationFrame(scanFrame);
+        return;
+      }
+
+      const ctx = canvasRef.current.getContext('2d');
+      canvasRef.current.width = videoRef.current.videoWidth;
+      canvasRef.current.height = videoRef.current.videoHeight;
+      
+      ctx?.drawImage(videoRef.current, 0, 0);
+      const imageData = ctx?.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+      
+      if (imageData) {
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code && !scannedCodesRef.current.has(code.data)) {
+          scannedCodesRef.current.add(code.data);
+          handleScan(code.data);
+          
+          // Clear the cache after 2 seconds to allow re-scanning
+          setTimeout(() => {
+            scannedCodesRef.current.delete(code.data);
+          }, 2000);
+        }
+      }
+      
+      animationIdRef.current = requestAnimationFrame(scanFrame);
+    };
+
+    startScanning();
+
+    return () => {
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [isScanning]);
+
+  const handleScan = (data: string) => {
+    if (data.trim()) {
+      showNotification(`Scanned: ${data}`, 'success');
+      if (onScan) {
+        onScan(data.trim());
+      }
+    }
+  };
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+
+
+  return (
+    <div className="w-full">
+      <div className="relative">
+        {/* Barcode Scanner */}
+        {isScanning && (
+          <motion.div
+            className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl overflow-hidden mb-6 border-2 border-slate-700 aspect-video"
+          >
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+            />
+            <canvas
+              ref={canvasRef}
+              className="hidden"
+            />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="w-64 h-32 border-2 border-blue-500 rounded-lg shadow-lg shadow-blue-500/50"
+              />
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Notification Toast */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg font-medium flex items-center gap-2 shadow-lg ${
+              notification.type === 'success'
+                ? 'bg-green-500/90 text-white'
+                : 'bg-red-500/90 text-white'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : (
+              <AlertCircle className="w-5 h-5" />
+            )}
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

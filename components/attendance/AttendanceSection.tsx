@@ -11,6 +11,7 @@ import ManualQRInput from './ManualInput';
 import ParentAccompaniment from './ParentAccompaniment';
 import AttendanceList from './AttendanceList';
 import ActionsSidebar from './ActionsSidebar';
+import BarcodeScanner from './BarcodeScanner';
 import { 
   getStudentByQRCode, 
   markAttendance, 
