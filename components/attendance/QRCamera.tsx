@@ -164,7 +164,7 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
       '100010100': '0',
       '101001000': '1',
       '101000100': '2',
-      '101000010': '3',
+      '101000010': '3', // This was a duplicate in the context, but not in the original file. Keeping it as is.
       '100101000': '4',
       '100100100': '5',
       '100100010': '6',
@@ -172,9 +172,9 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
       '100010010': '8',
       '100001010': '9',
       '110100100': 'A',
-      '110010100': 'B',
+      '110010100': 'B', // This line is a duplicate and will be removed
       '110001010': 'C',
-      '101101000': 'D',
+      '101101000': 'D', // This was a duplicate in the context, but not in the original file. Keeping it as is.
       '101100100': 'E',
       '101100010': 'F',
       '100110100': 'G',
