@@ -101,7 +101,6 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
     };
   }, [isScanning]);
 
-  // Code 39 barcode pattern detection
   const detectCode39Barcode = (imageData: ImageData): string | null => {
     const data = imageData.data;
     const width = imageData.width;
@@ -146,95 +145,16 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
     return lineData;
   };
 
-  // Code 39 decoder - converts bar patterns to characters
-  const decodeCode39Line = (lineData: number[]): string => {
-    // Find start and end patterns
-    const pattern = lineData.join('');
-    const startPattern = '100010010010'; // Start pattern for Code 39
-    
-    let code = '';
-    let i = pattern.indexOf(startPattern);
-    
-    if (i === -1) return '';
-    
-    i += startPattern.length;
-    
-    // Code 39 character patterns (simplified)
-    const code39Patterns: Record<string, string> = {
-      '100010100': '0',
-      '101001000': '1',
-      '101000100': '2',
-      '101000010': '3', // This was a duplicate in the context, but not in the original file. Keeping it as is.
-      '100101000': '4',
-      '100100100': '5',
-      '100100010': '6',
-      '101010000': '7',
-      '100010010': '8',
-      '100001010': '9',
-      '110100100': 'A',
-      '110010100': 'B', // This line is a duplicate and will be removed
-      '110001010': 'C',
-      '101101000': 'D', // This was a duplicate in the context, but not in the original file. Keeping it as is.
-      '101100100': 'E',
-      '101100010': 'F',
-      '100110100': 'G',
-      '100011100': 'H',
-      '100010110': 'I',
-      '101001100': 'J',
-      '110010010': 'K',
-      '110001001': 'L',
-      '101101001': 'M',
-      '101011001': 'N',
-      '101001101': 'O',
-      '100101101': 'P',
-      '101010011': 'Q',
-      '100110011': 'R',
-      '100011011': 'S',
-      '100101011': 'T',
-      '110010001': 'U',
-      '110001100': 'V',
-      '110001001': 'W',
-      '100111010': 'X',
-      '100011110': 'Y',
-      '100001110': 'Z',
-      '101010100': '-',
-      '101011010': '.',
-      '101101010': '*',
-    };
-
-    // Extract barcode characters (simplified approach)
-    const segments = pattern.substring(i).split('0000').slice(0, -1);
-    
-    for (const segment of segments) {
-      if (segment.length > 0) {
-        // Normalize and match pattern
-        const normalized = segment.substring(0, 9);
-        const char = code39Patterns[normalized];
-        if (char && char !== '*') {
-          code += char;
-        }
+    const fetchPatterns = async () => {
+      try {
+        const response = await fetch('/code39Patterns.json');
+        const patterns = await response.json();
+        setCode39Patterns(patterns);
+      } catch (error) {
+        console.error('Error loading Code 39 patterns:', error);
+        showNotification('Error loading barcode patterns', 'error');
       }
-    }
-
-    return code;
-  };
-
-  // Validate Code 39 format (should contain alphanumeric characters)
-  const validateCode39 = (code: string): number => {
-    let confidence = 0;
-    
-    // Check for alphanumeric with possible hyphens
-    if (/^[A-Z0-9\-]{5,20}$/.test(code)) {
-      confidence += 100;
-    }
-    
-    // Bonus for matching known patterns like "CZ9DELU" or "P2DXBFI"
-    if (/^[A-Z][A-Z0-9]{6}$/.test(code)) {
-      confidence += 50;
-    }
-    
-    return confidence;
-  };
+    };
 
   const handleScan = (data: string) => {
     if (data && data.trim()) {
