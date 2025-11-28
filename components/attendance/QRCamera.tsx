@@ -20,9 +20,14 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationIdRef = useRef<number>();
-  const streamRef = useRef<MediaStream>();
+  const animationIdRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const scannedCodesRef = useRef<Set<string>>(new Set());
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   useEffect(() => {
     if (externalIsScanning !== undefined) {
@@ -102,11 +107,6 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
         onScan(data.trim());
       }
     }
-  };
-
-  const showNotification = (message: string, type: 'success' | 'error') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
   };
 
 
