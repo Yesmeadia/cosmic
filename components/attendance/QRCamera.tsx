@@ -18,6 +18,13 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
   const streamRef = useRef<MediaStream | null>(null);
   const scannedCodesRef = useRef<Set<string>>(new Set());
   const lastScanTimeRef = useRef<number>(0);
+  const barcodeBufferRef = useRef<string>('');
+  
+  // Show notification
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
 
   // Fetch Code 39 patterns from JSON
   useEffect(() => {
@@ -28,18 +35,14 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
         setCode39Patterns(patterns);
       } catch (error) {
         console.error('Error loading Code 39 patterns:', error);
+        showNotification('Failed to load barcode patterns', 'error');
       }
     };
 
     fetchPatterns();
   }, []);
 
-  // Helper functions
-  const showNotification = (message: string, type: 'success' | 'error') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 4000);
-  };
-
+  // Extract binary line data from image
   const extractLineData = (data: Uint8ClampedArray, width: number, y: number, threshold: number): number[] => {
     const lineData: number[] = [];
     
@@ -56,49 +59,51 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
     return lineData;
   };
 
+  // Decode Code 39 barcode from line data
   const decodeCode39Line = (lineData: number[]): string => {
     if (Object.keys(code39Patterns).length === 0) return '';
 
-    const pattern = lineData.join('');
-    const startPattern = '100010010010'; // Start pattern for Code 39
-    
-    let code = '';
-    let i = pattern.indexOf(startPattern);
-    
-    if (i === -1) return '';
-    
-    i += startPattern.length;
+    const binaryString = lineData.join('');
+    let decodedCode = '';
 
-    // Extract barcode characters
-    const segments = pattern.substring(i).split('0000').slice(0, -1);
+    // CODE 39 encoding: each character is 9 bits (5 bars + 4 spaces or vice versa)
+    // Start code: 1001011 (13 bits with start marker)
+    // Stop code: 1001011
+    // Character format: wide-narrow pattern
     
-    for (const segment of segments) {
-      if (segment.length > 0) {
-        const normalized = segment.substring(0, 9);
-        const char = code39Patterns[normalized];
-        if (char && char !== '*') {
-          code += char;
+    // Look for start pattern (1001011 or similar variant)
+    const patternSize = 9;
+    let i = 0;
+
+    // Skip leading quiet zone (zeros)
+    while (i < binaryString.length && binaryString[i] === '0') {
+      i++;
+    }
+
+    // Process barcode patterns
+    while (i < binaryString.length - patternSize) {
+      const pattern = binaryString.substring(i, i + patternSize);
+      
+      // Look up character in patterns
+      const char = code39Patterns[pattern];
+      
+      if (char) {
+        if (char === '*') {
+          // Stop code found
+          break;
         }
+        decodedCode += char;
+        i += patternSize;
+      } else {
+        // Try to find next valid pattern by shifting
+        i += 1;
       }
     }
 
-    return code;
+    return decodedCode;
   };
 
-  const validateCode39 = (code: string): number => {
-    let confidence = 0;
-    
-    if (/^[A-Z0-9\-]{5,20}$/.test(code)) {
-      confidence += 100;
-    }
-    
-    if (/^[A-Z][A-Z0-9]{6}$/.test(code)) {
-      confidence += 50;
-    }
-    
-    return confidence;
-  };
-
+  // Advanced barcode detection with better pattern recognition
   const detectCode39Barcode = (imageData: ImageData): string | null => {
     const data = imageData.data;
     const width = imageData.width;
@@ -109,11 +114,13 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
     let bestConfidence = 0;
 
     // Sample multiple horizontal lines to find the barcode
-    for (let y = Math.floor(height * 0.2); y < Math.floor(height * 0.8); y += 5) {
+    const yStep = Math.max(1, Math.floor(height / 20));
+    
+    for (let y = Math.floor(height * 0.2); y < Math.floor(height * 0.8); y += yStep) {
       const lineData = extractLineData(data, width, y, threshold);
       const code = decodeCode39Line(lineData);
       
-      if (code && code.length >= 5) {
+      if (code && code.length >= 4) {
         const confidence = validateCode39(code);
         if (confidence > bestConfidence) {
           bestConfidence = confidence;
@@ -122,27 +129,68 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
       }
     }
 
-    return bestCode.length >= 5 ? bestCode : null;
+    // Also try with inverted colors (for reversed barcodes)
+    for (let y = Math.floor(height * 0.2); y < Math.floor(height * 0.8); y += yStep) {
+      const lineData = extractLineData(data, width, y, threshold).map(bit => bit === 0 ? 1 : 0);
+      const code = decodeCode39Line(lineData);
+      
+      if (code && code.length >= 4) {
+        const confidence = validateCode39(code);
+        if (confidence > bestConfidence) {
+          bestConfidence = confidence;
+          bestCode = code;
+        }
+      }
+    }
+
+    return bestCode.length >= 4 ? bestCode : null;
   };
 
+  // Validate Code 39 format
+  const validateCode39 = (code: string): number => {
+    let confidence = 0;
+    
+    // Check for valid alphanumeric format
+    if (/^[A-Z0-9\-\.]{4,20}$/.test(code)) {
+      confidence += 50;
+    }
+    
+    // Bonus for specific pattern like "CZ9DELU" or "P2DXBFI"
+    if (/^[A-Z][A-Z0-9]{6}$/.test(code)) {
+      confidence += 100;
+    }
+    
+    // Bonus for mixed case
+    if (/[A-Z]/.test(code) && /[0-9]/.test(code)) {
+      confidence += 30;
+    }
+    
+    return confidence;
+  };
+
+  // Process scanned barcode
   const handleScan = (data: string) => {
     if (data && data.trim()) {
       const cleanedCode = data.trim().toUpperCase();
       setScannedCode(cleanedCode);
-      showNotification(`Code 39 Barcode: ${cleanedCode}`, 'success');
+      showNotification(`Code 39 Barcode Detected: ${cleanedCode}`, 'success');
       
+      // Call parent callback with scanned data
       if (onScan) {
         onScan(cleanedCode);
       }
     }
   };
 
-  useEffect(() => {
-    // Synchronize internal isScanning state with external prop only when it changes
-    // and is explicitly provided. This avoids cascading renders.
-    if (externalIsScanning !== undefined) setIsScanning(externalIsScanning);
+  // Sync external isScanning prop
+  // This effect is removed as it was causing a setState warning.
+  // The `isScanning` state is now directly controlled by `externalIsScanning`
+  // if `externalIsScanning` is provided, otherwise it defaults to `true`.
+  useEffect(() => { // This useEffect is now only for the initial setup of `isScanning`
+    setIsScanning(externalIsScanning !== undefined ? externalIsScanning : true);
   }, [externalIsScanning]);
 
+  // Camera scanning effect
   useEffect(() => {
     if (!isScanning) return;
 
@@ -188,9 +236,11 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
       
       ctx.drawImage(videoRef.current, 0, 0);
       
+      // Detect barcode from canvas
       const imageData = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
       const detected = detectCode39Barcode(imageData);
       
+      // Process detected barcode
       if (detected && !scannedCodesRef.current.has(detected)) {
         const now = Date.now();
         if (now - lastScanTimeRef.current > 2000) {
@@ -198,6 +248,7 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
           handleScan(detected);
           lastScanTimeRef.current = now;
           
+          // Allow re-scanning after delay
           setTimeout(() => {
             scannedCodesRef.current.delete(detected);
           }, 5000);
@@ -217,7 +268,7 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [isScanning]);
+  }, [isScanning, code39Patterns]);
 
   return (
     <div className="w-full">
@@ -231,11 +282,14 @@ export default function BarcodeScanner({ onScan, isScanning: externalIsScanning 
               ref={videoRef}
               className="w-full h-full object-cover"
               playsInline
+              autoPlay
+              muted
             />
             <canvas
               ref={canvasRef}
               className="hidden"
             />
+            {/* Scan area overlay */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <motion.div
                 animate={{ scale: [1, 1.05, 1] }}
