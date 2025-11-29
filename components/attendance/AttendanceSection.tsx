@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { AlertCircle, Tabs } from 'lucide-react';
+import { AlertCircle} from 'lucide-react';
 import AttendanceHeader from './AttendanceHeader';
 import Footer from './Footer';
 import StatsCards from './StatsCards';
