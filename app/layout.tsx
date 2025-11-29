@@ -11,9 +11,6 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
-// Note: Metadata export doesn't work with 'use client', so define separately
-// For production, consider using a separate metadata file or removing 'use client' directive
-// and using a RootLayout wrapper component
 
 export default function RootLayout({
   children,
@@ -95,18 +92,6 @@ export default function RootLayout({
         </noscript>
         <AuthProvider>
           <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-            {/* Debug Info - Remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="fixed bottom-4 right-4 z-50 text-xs bg-gray-900 text-white p-2 rounded opacity-50 hover:opacity-100 transition-opacity max-w-xs">
-                {guestDataInitialized ? (
-                  <p>✅ Guest data ready</p>
-                ) : initError ? (
-                  <p>⚠️ {initError}</p>
-                ) : (
-                  <p>⏳ Initializing guests...</p>
-                )}
-              </div>
-            )}
             {children}
           </div>
         </AuthProvider>

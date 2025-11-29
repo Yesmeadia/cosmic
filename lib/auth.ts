@@ -44,7 +44,6 @@ export const initSessionTimeout = () => {
     'click'
   ];
 
-  // Debounce function to avoid too many resets
   let debounceTimer: NodeJS.Timeout | null = null;
   const debouncedResetTimer = () => {
     if (debounceTimer) {

@@ -95,146 +95,245 @@ const GuestExport: React.FC<GuestExportProps> = ({ guestList, stats }) => {
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
+      const margin = 15;
       const contentWidth = pageWidth - margin * 2;
 
-      let yPosition = margin;
+      const addHeader = (pageNum: number) => {
+        // Header background
+        pdf.setFillColor(37, 99, 235); // Blue-600
+        pdf.rect(0, 0, pageWidth, 35, 'F');
+        
+        // Company/Title
+        pdf.setFontSize(24);
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Cosmic Conference 2025', margin, 15);
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Guest Attendance Report', margin, 23);
+        
+        // Page number
+        pdf.setFontSize(10);
+        pdf.text(`Page ${pageNum}`, pageWidth - margin - 15, 20);
+      };
 
-      // Title
-      pdf.setFontSize(18);
-      pdf.setTextColor(31, 115, 76); // Green color
-      pdf.text('Guest Management Report', margin, yPosition);
-      yPosition += 10;
+      const addFooter = (pageNum: number) => {
+        // Footer line
+        pdf.setDrawColor(200, 200, 200);
+        pdf.setLineWidth(0.5);
+        pdf.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
+        
+        // Footer text
+        pdf.setFontSize(8);
+        pdf.setTextColor(120, 120, 120);
+        pdf.text(
+          `Generated on ${new Date().toLocaleString('en-IN')} | Confidential Report`,
+          margin,
+          pageHeight - 7
+        );
+        
+        pdf.text(
+          `Total Records: ${filteredGuests.length}`,
+          pageWidth - margin - 35,
+          pageHeight - 7
+        );
+      };
 
-      // Date and Summary
+      let yPosition = 45;
+      let pageCount = 1;
+
+      // Add first page header
+      addHeader(pageCount);
+
+      // Report metadata section
+      pdf.setFillColor(248, 250, 252); // Gray-50
+      pdf.roundedRect(margin, yPosition, contentWidth, 28, 2, 2, 'F');
+      
+      yPosition += 7;
+      
+      // Metadata
       pdf.setFontSize(10);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(`Report Generated: ${new Date().toLocaleString('en-IN')}`, margin, yPosition);
+      pdf.setTextColor(71, 85, 105); // Gray-600
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Report Details:', margin + 5, yPosition);
+      
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 116, 139);
+      
+      yPosition += 6;
+      pdf.text(`Report Type: ${exportType === 'all' ? 'Complete Guest Registry' : 'Attended Guests Only'}`, margin + 5, yPosition);
+      
       yPosition += 5;
-      pdf.text(`Report Type: ${exportType === 'all' ? 'All Guests' : 'Attended Only'}`, margin, yPosition);
+      pdf.text(`Report Date: ${new Date().toLocaleDateString('en-IN', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })}`, margin + 5, yPosition);
+      
+      yPosition += 5;
+      pdf.text(`Total Records: ${filteredGuests.length}`, margin + 5, yPosition);
+
+      yPosition += 15;
+
+      // Statistics cards
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(30, 41, 59);
+      pdf.text('Attendance Summary', margin, yPosition);
+      
       yPosition += 8;
 
-      // Statistics Box
-      pdf.setFontSize(11);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text('Summary Statistics:', margin, yPosition);
-      yPosition += 6;
-
-      pdf.setFontSize(9);
-      pdf.setDrawColor(200, 200, 200);
-      pdf.rect(margin, yPosition, contentWidth / 2 - 2, 25);
-      
-      const statsText = [
-        `Total Guests: ${stats.totalGuests}`,
-        `Checked In: ${stats.checkedIn}`,
-        `Checked Out: ${stats.checkedOut}`,
-        `Pending: ${stats.pending}`,
+      const cardWidth = (contentWidth - 15) / 4;
+      const statsData = [
+        { label: 'Total Guests', value: stats.totalGuests, color: [59, 130, 246] }, // Blue
+        { label: 'Checked In', value: stats.checkedIn, color: [34, 197, 94] }, // Green
+        { label: 'Checked Out', value: stats.checkedOut, color: [168, 85, 247] }, // Purple
+        { label: 'Pending', value: stats.pending, color: [251, 146, 60] }, // Orange
       ];
 
-      let statsY = yPosition + 3;
-      statsText.forEach(text => {
-        pdf.text(text, margin + 3, statsY);
-        statsY += 5;
+      statsData.forEach((stat, idx) => {
+        const xPos = margin + (cardWidth + 5) * idx;
+        
+        // Card background
+        pdf.setFillColor(255, 255, 255);
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setLineWidth(0.5);
+        pdf.roundedRect(xPos, yPosition, cardWidth, 18, 2, 2, 'FD');
+        
+        // Colored accent bar
+        pdf.setFillColor(stat.color[0], stat.color[1], stat.color[2]);
+        pdf.roundedRect(xPos, yPosition, cardWidth, 3, 1, 1, 'F');
+        
+        // Value
+        pdf.setFontSize(20);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(stat.color[0], stat.color[1], stat.color[2]);
+        pdf.text(String(stat.value), xPos + cardWidth / 2, yPosition + 11, { align: 'center' });
+        
+        // Label
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(stat.label, xPos + cardWidth / 2, yPosition + 16, { align: 'center' });
       });
 
-      yPosition += 30;
+      yPosition += 25;
 
-      // Table Headers
-      const headers = ['ID', 'Guest Name', 'Phone', 'Status', 'Check-in', 'Check-out', 'Attended By', 'Date'];
-      const colWidths = [12, 25, 18, 18, 22, 22, 25, 18];
+      // Table section
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(30, 41, 59);
+      pdf.text('Guest Records', margin, yPosition);
       
-      pdf.setFillColor(31, 115, 76);
+      yPosition += 8;
+
+      // Table headers with modern styling
+      const headers = ['ID', 'Guest Name', 'Phone', 'Status', 'Check-in', 'Check-out', 'Attended By', 'Date'];
+      const colWidths = [18, 35, 24, 22, 26, 26, 30, 22];
+      
+      pdf.setFillColor(37, 99, 235); // Blue-600
+      pdf.roundedRect(margin, yPosition - 2, contentWidth, 8, 1, 1, 'F');
+      
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'bold');
 
-      let xPosition = margin;
+      let xPosition = margin + 2;
       headers.forEach((header, idx) => {
-        pdf.text(header, xPosition, yPosition);
+        pdf.text(header, xPosition + 2, yPosition + 3);
         xPosition += colWidths[idx];
       });
 
-      yPosition += 7;
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 2;
+      yPosition += 10;
 
-      // Table Data
-      pdf.setTextColor(0, 0, 0);
+      // Table Data with modern alternating rows
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8);
 
-      let pageCount = 1;
-
       filteredGuests.forEach((guest, idx) => {
         // Check if we need a new page
-        if (yPosition > pageHeight - 15) {
+        if (yPosition > pageHeight - 30) {
+          addFooter(pageCount);
           pdf.addPage();
-          yPosition = margin;
           pageCount++;
+          yPosition = 45;
           
-          // Repeat headers on new page
-          pdf.setFillColor(31, 115, 76);
+          addHeader(pageCount);
+          
+          // Repeat table headers
+          pdf.setFillColor(37, 99, 235);
+          pdf.roundedRect(margin, yPosition - 2, contentWidth, 8, 1, 1, 'F');
+          
           pdf.setTextColor(255, 255, 255);
           pdf.setFont('helvetica', 'bold');
           
-          xPosition = margin;
+          xPosition = margin + 2;
           headers.forEach((header, idx) => {
-            pdf.text(header, xPosition, yPosition);
+            pdf.text(header, xPosition + 2, yPosition + 3);
             xPosition += colWidths[idx];
           });
           
-          yPosition += 5;
-          pdf.setDrawColor(200, 200, 200);
-          pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-          yPosition += 2;
-          
-          pdf.setTextColor(0, 0, 0); // Reset text color
-          pdf.setFont('helvetica', 'normal'); // Reset font style
+          yPosition += 10;
+          pdf.setFont('helvetica', 'normal');
+        }
+
+        // Alternating row background
+        if (idx % 2 === 0) {
+          pdf.setFillColor(248, 250, 252);
+          pdf.rect(margin, yPosition - 3, contentWidth, 6, 'F');
         }
 
         // Row data
         const rowData = [
-          guest.id.substring(0, 7),
-          guest.guestName,
+          guest.id.substring(0, 8),
+          guest.guestName.length > 20 ? guest.guestName.substring(0, 18) + '...' : guest.guestName,
           guest.guestPhone,
           guest.status === 'checked-in' ? 'Checked In' : guest.status === 'checked-out' ? 'Checked Out' : 'Pending',
-          guest.checkInTime ? new Date(guest.checkInTime).toLocaleTimeString('en-IN') : '-',
-          guest.checkOutTime ? new Date(guest.checkOutTime).toLocaleTimeString('en-IN') : '-',
-          guest.attendedBy || '-',
+          guest.checkInTime ? new Date(guest.checkInTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '-',
+          guest.checkOutTime ? new Date(guest.checkOutTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '-',
+          (guest.attendedBy || '-').length > 18 ? (guest.attendedBy || '-').substring(0, 16) + '...' : (guest.attendedBy || '-'),
           guest.date,
         ];
 
-        xPosition = margin;
-        rowData.forEach((data, idx) => {
-          // Alternate row background
-          if (idx === 0) {
-            if (idx % 2 === 0) {
-              pdf.setFillColor(240, 240, 240);
-              pdf.rect(margin, yPosition - 3, contentWidth, 4, 'F');
+        // Color-code status
+        xPosition = margin + 2;
+        rowData.forEach((data, colIdx) => {
+          pdf.setTextColor(51, 65, 85); // Default gray
+          
+          // Special styling for status column
+          if (colIdx === 3) {
+            if (data === 'Checked In') {
+              pdf.setTextColor(22, 163, 74); // Green
+              pdf.setFont('helvetica', 'bold');
+            } else if (data === 'Checked Out') {
+              pdf.setTextColor(147, 51, 234); // Purple
+              pdf.setFont('helvetica', 'bold');
+            } else {
+              pdf.setTextColor(234, 88, 12); // Orange
+              pdf.setFont('helvetica', 'bold');
             }
           }
           
-          const text = String(data).length > 15 ? String(data).substring(0, 12) + '...' : String(data);
-          pdf.text(text, xPosition + 1, yPosition);
-          xPosition += colWidths[idx];
+          pdf.text(String(data), xPosition + 3, yPosition);
+          
+          if (colIdx === 3) {
+            pdf.setFont('helvetica', 'normal');
+          }
+          
+          xPosition += colWidths[colIdx];
         });
 
-        yPosition += 4;
+        yPosition += 6;
       });
 
-      // Footer
-      pdf.setFontSize(8);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text(
-        `Page ${pageCount} | Generated on ${new Date().toLocaleString('en-IN')}`,
-        pageWidth / 2,
-        pageHeight - 5,
-        { align: 'center' }
-      );
+      // Add footer to last page
+      addFooter(pageCount);
 
       // Save PDF
-      pdf.save(`guests-${exportType}-${new Date().toISOString().split('T')[0]}.pdf`);
+      pdf.save(`guest-report-${exportType}-${new Date().toISOString().split('T')[0]}.pdf`);
 
       setIsExporting(false);
     } catch (error) {
@@ -339,13 +438,6 @@ const GuestExport: React.FC<GuestExportProps> = ({ guestList, stats }) => {
                 : `${stats.checkedIn + stats.checkedOut} attended records`}
             </p>
           </motion.button>
-        </div>
-
-        {/* Info Box */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <span className="font-semibold">📊 Info:</span> Both formats include guest details, attendance status, check-in/out times, and timestamps. Use CSV for data analysis or PDF for printing/sharing reports.
-          </p>
         </div>
       </div>
     </motion.div>
