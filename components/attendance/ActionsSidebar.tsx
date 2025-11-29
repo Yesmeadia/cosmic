@@ -18,6 +18,7 @@ interface AttendanceRecord {
   attendingParent: string;
   parentVerified: boolean;
   program: string;
+  gender?: string;
 }
 
 interface ActionsSidebarProps {
@@ -155,11 +156,12 @@ const ActionsSidebar: React.FC<ActionsSidebarProps> = ({
     // Add table
     autoTable(doc, {
       startY: startY + boxHeight + 8,
-      head: [['S.No', 'Student ID', 'Name', 'Class', 'School', 'Accompanied By', 'Parent Participating', 'Time']],
+      head: [['S.No', 'Student ID', 'Name', 'Gender', 'Class', 'School', 'Accompanied By', 'Parent Participating', 'Time']],
       body: attendanceList.map((record, idx) => [
         idx + 1,
         record.studentId.substring(0, 7),
         record.studentName,
+        record.gender || 'N/A',
         record.class,
         record.school,
         record.attendingParent,

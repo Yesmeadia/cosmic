@@ -1,8 +1,9 @@
+// components/attendance/AttendanceSection.tsx (Updated)
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Tabs } from 'lucide-react';
 import AttendanceHeader from './AttendanceHeader';
 import Footer from './Footer';
 import StatsCards from './StatsCards';
@@ -11,7 +12,7 @@ import ManualQRInput from './ManualInput';
 import ParentAccompaniment from './ParentAccompaniment';
 import AttendanceList from './AttendanceList';
 import ActionsSidebar from './ActionsSidebar';
-import BarcodeScanner from './BarcodeScanner';
+import GuestManagement from './GuestManagement';
 import { 
   getStudentByQRCode, 
   markAttendance, 
@@ -27,6 +28,7 @@ interface Student {
   email?: string;
   mobile?: string;
   program?: string;
+  gender?: string;
 }
 
 interface AttendanceRecord {
@@ -41,6 +43,7 @@ interface AttendanceRecord {
   attendingParent: string;
   parentVerified: boolean;
   program: string;
+  gender?: string;
 }
 
 interface ScanResult {
@@ -57,7 +60,10 @@ interface Stats {
   byParent: Record<string, number>;
 }
 
+type TabType = 'attendance' | 'guests';
+
 const AttendanceSection: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabType>('attendance');
   const [isScanning, setIsScanning] = useState(false);
   const [attendanceList, setAttendanceList] = useState<AttendanceRecord[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -91,7 +97,6 @@ const AttendanceSection: React.FC = () => {
     loadTodaysAttendance();
   }, []);
 
-  // Calculate totalParticipation
   const totalParticipation = useMemo(() => {
     return attendanceList.reduce((total, record) => {
       let count = 1;
@@ -249,7 +254,8 @@ const AttendanceSection: React.FC = () => {
         timestamp: new Date(),
         attendingParent: parentData.attendingParent,
         parentVerified: parentData.parentVerified,
-        program: parentData.program
+        program: parentData.program,
+        gender: selectedStudent.gender
       };
 
       const updatedList = [...attendanceList, newAttendance];
@@ -288,10 +294,11 @@ const AttendanceSection: React.FC = () => {
 
   const handleExport = () => {
     const csv = [
-      ['Student ID', 'Name', 'Class', 'School', 'Email', 'Accompanied By', 'Parent Participating', 'Time', 'Date'],
+      ['Student ID', 'Name', 'Gender', 'Class', 'School', 'Email', 'Accompanied By', 'Parent Participating', 'Time', 'Date'],
       ...attendanceList.map(a => [
         a.studentId,
         a.studentName,
+        a.gender || 'N/A',
         a.class,
         a.school,
         a.email,
@@ -333,7 +340,30 @@ const AttendanceSection: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Updated StatsCards with totalParticipation prop */}
+        {/* Tab Navigation */}
+        <div className="mb-6 flex gap-2 bg-white rounded-lg shadow-md p-1">
+          <button
+            onClick={() => setActiveTab('attendance')}
+            className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${
+              activeTab === 'attendance'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            Student Attendance
+          </button>
+          <button
+            onClick={() => setActiveTab('guests')}
+            className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${
+              activeTab === 'guests'
+                ? 'bg-green-600 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            Guest Management
+          </button>
+        </div>
+
         <StatsCards 
           stats={stats} 
           currentTime={currentTime} 
@@ -341,94 +371,104 @@ const AttendanceSection: React.FC = () => {
           totalParticipation={totalParticipation}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-2"
-          >
-            <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 lg:p-8">
-              <div className="flex items-center gap-2 mb-4 md:mb-6">
-                <div className="w-2 h-6 bg-blue-600 rounded-full"></div>
-                <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
-                  {useManualInput ? 'Manual Input' : 'Barcode Scanner'}
-                </h2>
-              </div>
-
-              {!useManualInput ? (
-                <>
-                  <QRScanner 
-                    onScan={handleScan} 
-                    isScanning={isScanning} 
-                  />
-                  <button
-                    onClick={() => setIsScanning(!isScanning)}
-                    disabled={isLoading}
-                    className={`mt-4 w-full px-4 py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold transition-all duration-200 ${
-                      isScanning
-                        ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
-                        : 'bg-green-600 text-white hover:bg-green-700 shadow-lg'
-                    } disabled:bg-gray-400 disabled:cursor-not-allowed`}
-                  >
-                    {isScanning ? 'Stop Scanning' : 'Start Scanning'}
-                  </button>
-                </>
-              ) : (
-                <ManualQRInput 
-                  onScan={handleScan} 
-                  isLoading={isLoading}
-                  onSearch={handleSearch}
-                  searchResults={searchResults}
-                />
-              )}
-
-              <button
-                onClick={() => {
-                  setIsScanning(false);
-                  setUseManualInput(!useManualInput);
-                  setSearchResults([]);
-                }}
-                disabled={isLoading}
-                className="mt-4 w-full px-4 py-2 text-sm md:text-base text-blue-600 font-semibold hover:bg-blue-50 rounded-lg transition-colors duration-200 disabled:text-gray-400 border border-blue-200"
+        {/* Attendance Tab */}
+        {activeTab === 'attendance' && (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="lg:col-span-2"
               >
-                {useManualInput ? 'Use Camera Scanner' : 'Use Manual Input'}
-              </button>
-
-              {scanResult && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`mt-4 md:mt-6 p-3 md:p-4 rounded-lg flex items-center gap-2 md:gap-3 text-sm md:text-base ${
-                    scanResult.status === 'success'
-                      ? 'bg-green-50 text-green-800 border border-green-200'
-                      : scanResult.status === 'warning'
-                      ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                      : 'bg-red-50 text-red-800 border border-red-200'
-                  }`}
-                >
-                  <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full flex-shrink-0 ${
-                    scanResult.status === 'success' ? 'bg-green-500' :
-                    scanResult.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}></div>
-                  <div className="flex-1">
-                    <p className="font-semibold">{scanResult.message}</p>
-                    {scanResult.student && (
-                      <p className="text-xs md:text-sm opacity-90">Class: {scanResult.class}</p>
-                    )}
+                <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 lg:p-8">
+                  <div className="flex items-center gap-2 mb-4 md:mb-6">
+                    <div className="w-2 h-6 bg-blue-600 rounded-full"></div>
+                    <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
+                      {useManualInput ? 'Manual Input' : 'Barcode Scanner'}
+                    </h2>
                   </div>
-                </motion.div>
-              )}
+
+                  {!useManualInput ? (
+                    <>
+                      <QRScanner 
+                        onScan={handleScan} 
+                        isScanning={isScanning} 
+                      />
+                      <button
+                        onClick={() => setIsScanning(!isScanning)}
+                        disabled={isLoading}
+                        className={`mt-4 w-full px-4 py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold transition-all duration-200 ${
+                          isScanning
+                            ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
+                            : 'bg-green-600 text-white hover:bg-green-700 shadow-lg'
+                        } disabled:bg-gray-400 disabled:cursor-not-allowed`}
+                      >
+                        {isScanning ? 'Stop Scanning' : 'Start Scanning'}
+                      </button>
+                    </>
+                  ) : (
+                    <ManualQRInput 
+                      onScan={handleScan} 
+                      isLoading={isLoading}
+                      onSearch={handleSearch}
+                      searchResults={searchResults}
+                    />
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setIsScanning(false);
+                      setUseManualInput(!useManualInput);
+                      setSearchResults([]);
+                    }}
+                    disabled={isLoading}
+                    className="mt-4 w-full px-4 py-2 text-sm md:text-base text-blue-600 font-semibold hover:bg-blue-50 rounded-lg transition-colors duration-200 disabled:text-gray-400 border border-blue-200"
+                  >
+                    {useManualInput ? 'Use Camera Scanner' : 'Use Manual Input'}
+                  </button>
+
+                  {scanResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`mt-4 md:mt-6 p-3 md:p-4 rounded-lg flex items-center gap-2 md:gap-3 text-sm md:text-base ${
+                        scanResult.status === 'success'
+                          ? 'bg-green-50 text-green-800 border border-green-200'
+                          : scanResult.status === 'warning'
+                          ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                          : 'bg-red-50 text-red-800 border border-red-200'
+                      }`}
+                    >
+                      <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full flex-shrink-0 ${
+                        scanResult.status === 'success' ? 'bg-green-500' :
+                        scanResult.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}></div>
+                      <div className="flex-1">
+                        <p className="font-semibold">{scanResult.message}</p>
+                        {scanResult.student && (
+                          <p className="text-xs md:text-sm opacity-90">Class: {scanResult.class}</p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+
+              <ActionsSidebar
+                attendanceList={attendanceList}
+                onExport={handleExport}
+              />
             </div>
-          </motion.div>
 
-          <ActionsSidebar
-            attendanceList={attendanceList}
-            onExport={handleExport}
-          />
-        </div>
+            <AttendanceList attendanceList={attendanceList} />
+          </>
+        )}
 
-        <AttendanceList attendanceList={attendanceList} />
+        {/* Guests Tab */}
+        {activeTab === 'guests' && (
+          <GuestManagement />
+        )}
 
         {showParentModal && selectedStudent && (
           <ParentAccompaniment
@@ -439,7 +479,7 @@ const AttendanceSection: React.FC = () => {
           />
         )}
       </div>
-        <Footer />
+      <Footer />
     </div>
   );
 };

@@ -22,6 +22,7 @@ export interface Student {
   mobile?: string;
   program?: string;
   registrationId?: string;
+  gender?: string;
 }
 
 // Attendance record interface
@@ -38,6 +39,7 @@ export interface AttendanceRecord {
   parentVerified: boolean;
   program: string;
   registrationId: string;
+  gender?: string;
 }
 
 /**
@@ -63,6 +65,7 @@ export const getStudentByRegistrationId = async (registrationId: string): Promis
     const student: Student = {
       id: docSnap.id,
       studentName: data.studentName || data.name || data.fullName || data.student_name || 'Unknown',
+      gender: data.gender || data.student_gender || 'N/A',
       class: data.class || data.grade || data.standard || data.student_class || 'N/A',
       school: data.school || data.schoolName || data.student_school || 'N/A',
       email: data.email || data.studentEmail || data.student_email || '',
@@ -103,6 +106,7 @@ export const getAllRegisteredStudents = async (): Promise<{
       const student: Student = {
         id: doc.id,
         studentName: data.studentName || data.name || data.fullName || data.student_name || 'Unknown',
+        gender: data.gender || data.student_gender || 'N/A',
         class: data.class || data.grade || data.standard || data.student_class || 'N/A',
         school: data.school || data.schoolName || data.student_school || 'N/A',
         email: data.email || data.studentEmail || data.student_email || '',
@@ -262,6 +266,7 @@ export const searchStudentsInRegistrations = searchStudents;
 
 /**
  * Mark attendance with registration validation
+ * FIXED: Now includes gender field
  */
 export const markAttendance = async (studentId: string, data: {
   studentId: string;
@@ -273,6 +278,7 @@ export const markAttendance = async (studentId: string, data: {
   attendingParent: string;
   parentVerified: boolean;
   program: string;
+  gender?: string;  //  Added gender to the interface
 }): Promise<{
   success: boolean;
   id?: string;
@@ -292,6 +298,7 @@ export const markAttendance = async (studentId: string, data: {
     const attendanceRef = collection(db, 'attendance');
     const docRef = await addDoc(attendanceRef, {
       ...data,
+      gender: validationResult.student.gender || data.gender || 'N/A',  //  FIXED: Now saving gender
       registrationId: validationResult.student.registrationId || studentId,
       timestamp: Timestamp.now()
     });

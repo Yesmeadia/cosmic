@@ -12,6 +12,7 @@ interface Student {
   email?: string;
   mobile?: string;
   program?: string;
+  gender?: string;
 }
 
 interface ParentAccompanimentProps {
@@ -51,8 +52,6 @@ const ParentAccompaniment: React.FC<ParentAccompanimentProps> = ({
     { key: 'None', color: 'from-gray-400 to-gray-600'},
   ], []);
 
-
-
   const isValidStudent = useMemo(() => {
     return Boolean(student?.id && student?.studentName && student?.class && student?.school);
   }, [student]);
@@ -65,7 +64,6 @@ const ParentAccompaniment: React.FC<ParentAccompanimentProps> = ({
     utterance.pitch = 1;
     utterance.volume = 1;
     
-    // Try to use an Indian English voice if available
     const voices = window.speechSynthesis.getVoices();
     const indianVoice = voices.find(voice => 
       voice.lang.startsWith('en-IN') || voice.name.includes('India')
@@ -74,7 +72,6 @@ const ParentAccompaniment: React.FC<ParentAccompanimentProps> = ({
     if (indianVoice) {
       utterance.voice = indianVoice;
     } else {
-      // Fallback to any English voice
       const englishVoice = voices.find(voice => voice.lang.startsWith('en-'));
       if (englishVoice) {
         utterance.voice = englishVoice;
@@ -180,6 +177,11 @@ const ParentAccompaniment: React.FC<ParentAccompanimentProps> = ({
                     <p className="text-xl font-bold text-gray-900">
                       {student.studentName}
                     </p>
+                    {student.gender && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        Gender: <span className="font-semibold">{student.gender}</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-sm">

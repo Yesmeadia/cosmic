@@ -17,6 +17,7 @@ interface AttendanceRecord {
   attendingParent: string;
   parentVerified: boolean;
   program: string;
+  gender?: string;
 }
 
 interface AttendanceListProps {
