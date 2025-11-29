@@ -5,7 +5,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, FileText, File, Loader } from 'lucide-react';
 import jsPDF from 'jspdf';
-import { useTable } from '@tanstack/react-table';
 
 interface GuestRecord {
   id: string;
