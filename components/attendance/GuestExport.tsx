@@ -146,7 +146,7 @@ const GuestExport: React.FC<GuestExportProps> = ({ guestList, stats }) => {
       pdf.setFillColor(31, 115, 76);
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(9);
-      pdf.setFont(undefined, 'bold');
+      pdf.setFont('helvetica', 'bold');
 
       let xPosition = margin;
       headers.forEach((header, idx) => {
@@ -161,7 +161,7 @@ const GuestExport: React.FC<GuestExportProps> = ({ guestList, stats }) => {
 
       // Table Data
       pdf.setTextColor(0, 0, 0);
-      pdf.setFont(undefined, 'normal');
+      pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8);
 
       let pageCount = 1;
@@ -176,7 +176,7 @@ const GuestExport: React.FC<GuestExportProps> = ({ guestList, stats }) => {
           // Repeat headers on new page
           pdf.setFillColor(31, 115, 76);
           pdf.setTextColor(255, 255, 255);
-          pdf.setFont(undefined, 'bold');
+          pdf.setFont('helvetica', 'bold');
           
           xPosition = margin;
           headers.forEach((header, idx) => {
@@ -189,8 +189,8 @@ const GuestExport: React.FC<GuestExportProps> = ({ guestList, stats }) => {
           pdf.line(margin, yPosition, pageWidth - margin, yPosition);
           yPosition += 2;
           
-          pdf.setTextColor(0, 0, 0);
-          pdf.setFont(undefined, 'normal');
+          pdf.setTextColor(0, 0, 0); // Reset text color
+          pdf.setFont('helvetica', 'normal'); // Reset font style
         }
 
         // Row data

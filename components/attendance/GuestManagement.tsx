@@ -146,20 +146,20 @@ const GuestManagement: React.FC = () => {
     }
   };
 
-  const handleGuestScan = async (guestId: string, guestName: string) => {
+  const handleGuestScan = async (guest: GuestRecord) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const foundGuest = guestList.find(g => g.id === guestId || g.id.startsWith(guestId));
+      const foundGuest = guestList.find(g => g.id === guest.id || g.id.startsWith(guest.id));
       
       if (!foundGuest) {
-        setError(`Guest not found with ID: ${guestId}`);
+        setError(`Guest not found with ID: ${guest.id}`);
         setTimeout(() => setError(null), 3000);
         setIsLoading(false);
         return;
       }
-
+      
       setIsLoading(false);
     } catch (err) {
       console.error('Error processing guest scan:', err);
